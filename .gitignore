@@ -27,3 +27,64 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Android related
+*.iml
+*.class
+.gradle
+/android/local.properties
+/android/.gradle
+/android/captures/
+/android/gradlew
+/android/gradlew.bat
+/android/.idea
+/android/key.properties
+*.jks
+*.keystore
+
+# iOS/XCode related
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+**/*sync/
+.sconsign.dblite
+.tags*
+**/.vagrant/
+**/DerivedData/
+Icon?
+**/Pods/
+**/.symlinks/
+profile
+xcuserdata
+**/.generated/
+Flutter/App.framework
+Flutter/Flutter.framework
+Flutter/Flutter.podspec
+Flutter/Generated.xcconfig
+Flutter/ephemeral/
+Flutter/app.flx
+Flutter/app.zip
+Flutter/flutter_assets/
+Flutter/flutter_export_environment.sh
+ServiceDefinitions.json
+Runner/GeneratedPluginRegistrant.*
+
+# Exceptions to above rules.
+!android/**/gradle-wrapper.jar
+!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Coverage
+coverage/
+
+# Temp files
+*.tmp
+.DS_Store
