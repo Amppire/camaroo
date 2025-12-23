@@ -1,6 +1,6 @@
 import 'package:camaroo/core/abstractions/home_api.dart';
 
-class HomeModel implements HomeApi{
+class HomeApiModel implements HomeApi{
 
   int _counter = 0;
   @override

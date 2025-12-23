@@ -13,11 +13,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final HomeApi homeModel = HomeModel();
-  late final HomeAdapter homeAdapter = HomeAdapter(homeModel);
+  final HomeApi homeApi = HomeApiModel();
+  late final HomeAdapter homeAdapter = HomeAdapter(homeApi);
 
   void _incrementCounter() {
-    homeModel.setCounter(homeModel.counter + 1);
+    homeApi.setCounter(homeApi.counter + 1);
   }
 
 
