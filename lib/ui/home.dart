@@ -1,3 +1,6 @@
+import 'package:camaroo/core/abstractions/home_api.dart';
+import 'package:camaroo/core/models/home_model.dart';
+import 'package:camaroo/adapters/home_adapter.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -10,13 +13,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _counter = 0;
+  final HomeApi homeModel = HomeModel();
+  late final HomeAdapter homeAdapter = HomeAdapter(homeModel);
 
   void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+    homeModel.setCounter(homeModel.counter + 1);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +30,15 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
         child: Column(
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            ValueListenableBuilder(
+              valueListenable: homeAdapter.counterNotifier,
+              builder: (context, int value, child) => Text(
+                value.toString(),
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
             ),
           ],
         ),
