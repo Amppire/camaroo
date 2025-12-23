@@ -135,11 +135,14 @@ class EditorService extends ChangeNotifier {
     notifyListeners();
 
     // Apply convolution for sharpening
-    _editedImage = img.convolution(_editedImage!, [
-      0, -1, 0,
-      -1, 5, -1,
-      0, -1, 0,
-    ]);
+    _editedImage = img.convolution(
+      _editedImage!,
+      filter: [
+        0, -1, 0,
+        -1, 5, -1,
+        0, -1, 0,
+      ],
+    );
 
     _isProcessing = false;
     notifyListeners();

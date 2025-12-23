@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:camera/camera.dart';
-import '../models/camera_settings.dart';
+import 'package:camaroo/models/camera_settings.dart' as camera_settings;
 
 class CameraService extends ChangeNotifier {
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
-  CameraSettings _settings = CameraSettings();
+  camera_settings.CameraSettings _settings = camera_settings.CameraSettings();
   bool _isInitialized = false;
   String? _error;
 
   CameraController? get controller => _controller;
   List<CameraDescription> get cameras => _cameras;
-  CameraSettings get settings => _settings;
+  camera_settings.CameraSettings get settings => _settings;
   bool get isInitialized => _isInitialized;
   String? get error => _error;
 
@@ -66,27 +66,28 @@ class CameraService extends ChangeNotifier {
     try {
       // Apply exposure
       await _controller!.setExposureOffset(_settings.exposureTime * 10 - 5);
-      
+
       // Apply focus mode
-      if (_settings.focusMode == FocusMode.auto) {
-        await _controller!.setFocusMode(camera.FocusMode.auto);
-      } else if (_settings.focusMode == FocusMode.continuous) {
-        await _controller!.setFocusMode(camera.FocusMode.auto);
+      if (_settings.focusMode == camera_settings.FocusMode.auto) {
+        await _controller!.setFocusMode(FocusMode.auto);
+      } else if (_settings.focusMode == camera_settings.FocusMode.continuous) {
+        await _controller!.setFocusMode(FocusMode.locked);
       }
+
 
       // Apply flash mode
       switch (_settings.flashMode) {
-        case FlashMode.auto:
-          await _controller!.setFlashMode(camera.FlashMode.auto);
+        case camera_settings.FlashMode.auto:
+          await _controller!.setFlashMode(FlashMode.auto);
           break;
-        case FlashMode.on:
-          await _controller!.setFlashMode(camera.FlashMode.always);
+        case camera_settings.FlashMode.on:
+          await _controller!.setFlashMode(FlashMode.always);
           break;
-        case FlashMode.off:
-          await _controller!.setFlashMode(camera.FlashMode.off);
+        case camera_settings.FlashMode.off:
+          await _controller!.setFlashMode(FlashMode.off);
           break;
-        case FlashMode.torch:
-          await _controller!.setFlashMode(camera.FlashMode.torch);
+        case camera_settings.FlashMode.torch:
+          await _controller!.setFlashMode(FlashMode.torch);
           break;
       }
 
@@ -127,7 +128,7 @@ class CameraService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFocusMode(FocusMode mode) {
+  void setFocusMode( camera_settings.FocusMode mode) {
     _settings.focusMode = mode;
     applySettings();
   }
@@ -142,7 +143,7 @@ class CameraService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFlashMode(FlashMode mode) {
+  void setFlashMode(camera_settings.FlashMode mode) {
     _settings.flashMode = mode;
     applySettings();
   }

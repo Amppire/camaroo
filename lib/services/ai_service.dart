@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 
 /// Service for AI-powered features using ML Kit
