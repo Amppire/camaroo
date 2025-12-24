@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:camaroo/widgets/camera/glass_button.dart';
 import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
+import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
@@ -134,7 +134,7 @@ class _CameraState extends State<Camera> {
             ValueListenableBuilder<XFile?>(
               valueListenable: widget.cameraAdapter.pictureTakenNotifier,
               builder: (context, picture, _) {
-                return _GalleryThumbnail(picture: picture);
+                return GalleryThumbnail(picture: picture);
               },
             ),
             
@@ -227,65 +227,5 @@ class _CameraState extends State<Camera> {
       case null:
         return Icons.flash_off;
     }
-  }
-}
-
-
-
-// Gallery thumbnail widget
-class _GalleryThumbnail extends StatelessWidget {
-  final XFile? picture;
-  
-  const _GalleryThumbnail({this.picture});
-
-  @override
-  Widget build(BuildContext context) {
-    if (picture == null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: const Icon(
-              Icons.photo_library_outlined,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.white.withOpacity(0.5),
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Image.file(
-            File(picture!.path),
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-    );
   }
 }
