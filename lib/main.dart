@@ -1,23 +1,10 @@
-import 'package:camaroo/ui/camera.dart' as camera_ui;
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:camaroo/utils/app_constants.dart';
 import 'package:camaroo/utils/theme_constants.dart';
+import 'package:camaroo/ui/camera.dart'; // Your new simple camera screen
 
-Future<void> main() async {
-  // Fetch the available cameras before initializing the app.
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
-    final camerasList = await availableCameras();
-    print('Found ${camerasList.length} cameras');
-    
-    // CRITICAL: Set cameras in camera.dart's _cameras variable
-    camera_ui.cameras = camerasList;
-    
-  } on CameraException catch (e) {
-    print('Error: ${e.code}\n${e.description}');
-  }
-  runApp(const camera_ui.CameraApp());
+void main() {
+  runApp(const Cameroo());
 }
 
 class Cameroo extends StatelessWidget {
@@ -30,7 +17,7 @@ class Cameroo extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: ThemeConstants.primaryColor),
       ),
-      home: const camera_ui.CameraExampleHome(),
+      home: const SimpleCameraScreen(), // Use the new simple camera
     );
   }
 }

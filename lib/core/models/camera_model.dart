@@ -1,13 +1,14 @@
 import 'package:camera/camera.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
+import 'package:flutter/foundation.dart';
 
 class CameraApiModel implements CameraApi {
-  CameraStatus _cameraStatus = CameraStatus.initializing;
+  CameraStatus _cameraStatus = CameraStatus.uninitialized;
   CameraController? _cameraController;
   List<CameraDescription> _cameras = [];
   String? _errorMessage;
   int _currentCameraIndex = 0;
-  FlashMode? _flashMode;
+  FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
 
   // Camera Status
@@ -42,7 +43,8 @@ class CameraApiModel implements CameraApi {
   @override
   Function(CameraController?) onCameraControllerChanged = (cameraController) {};
 
-  @override void setCameraController(CameraController? newCameraController) {
+  @override
+  void setCameraController(CameraController? newCameraController) {
     _cameraController = newCameraController;
     onCameraControllerChanged(newCameraController);
   }
@@ -71,6 +73,8 @@ class CameraApiModel implements CameraApi {
   void setFlashMode(FlashMode? newFlashMode) {
     _flashMode = newFlashMode;
     onFlashModeChanged(newFlashMode);
+    // Apply flash mode to controller
+    _applyFlashMode();
   }
 
   // Error Message
@@ -98,23 +102,67 @@ class CameraApiModel implements CameraApi {
     onPictureTakenChanged(newPictureTaken);
   }
 
+  // ============================================================================
+  // PUBLIC METHODS
+  // ============================================================================
+
   @override
-  void initializeCamera() {
-    // Validation
+  Future<void> initializeCamera() async {
+    // Validation: Don't re-initialize if already initializing
     if (status == CameraStatus.initializing) {
-      return; // Already initializing
+      return;
     }
 
     // Update state
     setStatus(CameraStatus.initializing);
     setErrorMessage(null);
 
-    // Tell UI to perform the actual initialization
-   setStatus(CameraStatus.initializing);
+    try {
+      // Get available cameras if not already loaded
+      if (_cameras.isEmpty) {
+        _cameras = await availableCameras();
+        onCamerasChanged(_cameras);
+      }
+
+      // Business rule: Must have at least one camera
+      if (_cameras.isEmpty) {
+        setErrorMessage('No cameras found on this device');
+        setStatus(CameraStatus.error);
+        return;
+      }
+
+      // Dispose old controller if exists
+      await _cameraController?.dispose();
+
+      // Create new controller with current camera
+      final camera = _cameras[_currentCameraIndex];
+      final controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+
+      // Initialize the controller
+      await controller.initialize();
+
+      // Set flash mode
+      await controller.setFlashMode(_flashMode ?? FlashMode.off);
+
+      // Update state
+      setCameraController(controller);
+      setStatus(CameraStatus.ready);
+    } on CameraException catch (e) {
+      setErrorMessage('Camera error: ${e.description}');
+      setStatus(CameraStatus.error);
+    } catch (e) {
+      setErrorMessage('Unexpected error: $e');
+      setStatus(CameraStatus.error);
+    }
   }
 
-   @override
-  void switchCamera() {
+  @override
+  Future<void> switchCamera() async {
     // Business rule: Can't switch if only one camera
     if (cameras.length <= 1) {
       setErrorMessage('Only one camera available');
@@ -123,37 +171,50 @@ class CameraApiModel implements CameraApi {
 
     // Business rule: Can't switch while taking picture
     if (status == CameraStatus.takingPicture) {
+      setErrorMessage('Cannot switch while taking picture');
       return;
     }
 
     // Calculate next camera index (business logic)
     final newIndex = (_currentCameraIndex + 1) % cameras.length;
-
-    // Update state
-    setStatus(CameraStatus.initializing);
-    setErrorMessage(null);
     setCurrentCameraIndex(newIndex);
 
-    // Tell UI to perform the actual switch
-    setCurrentCameraIndex(newIndex);
+    // Re-initialize with new camera
+    await initializeCamera();
   }
 
-
   @override
-  void takePicture() {
-    // Business rules
+  Future<void> takePicture() async {
+    // Business rules: Camera must be ready
     if (status != CameraStatus.ready) {
       setErrorMessage('Camera not ready');
       return;
     }
 
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      setErrorMessage('Camera controller not initialized');
+      return;
+    }
+
     setStatus(CameraStatus.takingPicture);
-    // UI will handle the actual picture taking
+    setErrorMessage(null);
+
+    try {
+      final XFile picture = await _cameraController!.takePicture();
+      setPictureTaken(picture);
+      setStatus(CameraStatus.ready);
+    } on CameraException catch (e) {
+      setErrorMessage('Failed to take picture: ${e.description}');
+      setStatus(CameraStatus.ready);
+    } catch (e) {
+      setErrorMessage('Unexpected error: $e');
+      setStatus(CameraStatus.ready);
+    }
   }
 
-    @override
-  void toggleFlash() {
-    // Pure business logic - no platform code
+  @override
+  Future<void> toggleFlash() async {
+    // Pure business logic - cycle through flash modes
     FlashMode newMode;
     switch (flashMode) {
       case FlashMode.off:
@@ -163,18 +224,37 @@ class CameraApiModel implements CameraApi {
         newMode = FlashMode.always;
         break;
       case FlashMode.always:
+        newMode = FlashMode.torch;
+        break;
+      case FlashMode.torch:
         newMode = FlashMode.off;
         break;
       case null:
         newMode = FlashMode.auto;
         break;
-      case FlashMode.torch:
-        newMode = FlashMode.off;
-        break;
     }
+    
     setFlashMode(newMode);
   }
 
-    
+  // ============================================================================
+  // PRIVATE HELPERS
+  // ============================================================================
 
+  Future<void> _applyFlashMode() async {
+    if (_cameraController != null && _flashMode != null) {
+      try {
+        await _cameraController!.setFlashMode(_flashMode!);
+      } catch (e) {
+        if (kDebugMode) {
+          print('Failed to set flash mode: $e');
+        }
+      }
+    }
+  }
+
+  /// Dispose resources when done
+  Future<void> dispose() async {
+    await _cameraController?.dispose();
+  }
 }
