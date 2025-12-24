@@ -10,8 +10,14 @@ abstract class CameraApi {
   void setStatus(CameraStatus newStatus);
 
   // Camera Controller
+    // TODO: Doc.
+    // CameraController? get cameraController;
+
+  // Cameras
   // TODO: Doc.
-  CameraController? get cameraController;
+  List<CameraDescription> get cameras;
+  Function(List<CameraDescription>) onCamerasChanged = (cameras) {};
+  void setCameras(List<CameraDescription> newCameras);
 
   // Camera Index
   // TODO: Doc.
@@ -31,13 +37,33 @@ abstract class CameraApi {
   Function(String?) onErrorMessageChanged = (errorMessage) {};
   void setErrorMessage(String? newErrorMessage);
 
+  // Picture Taken
+  // TODO: Doc.
+  XFile? get pictureTaken;
+  Function(XFile?) onPictureTakenChanged = (pictureTaken) {};
+  void setPictureTaken(XFile? newPictureTaken);
+
   /// Functions
   /// ---------------------------------------------------------------------------
   
   /// Initialzes phone's camera. 
   /// Will return error if no cameras are found or if the camera is not available.
   /// 
-  Future<void> initializeCamera();
+  void initializeCamera();
 
-  
+  /// Switches to the next camera.
+  /// Will return error if there is only one camera or if the camera is not available.
+  /// 
+  void switchCamera();
+
+  /// Takes a picture.
+  /// Will return error if the camera is not ready.
+  /// 
+  void takePicture();
+
+  /// Toggles the flash mode.
+  /// Will return error if the flash mode is not available.
+  /// 
+  void toggleFlash();
+
 }

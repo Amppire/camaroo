@@ -3,11 +3,12 @@ import 'package:camaroo/core/abstractions/camera_api.dart';
 
 class CameraApiModel implements CameraApi {
   CameraStatus _cameraStatus = CameraStatus.initializing;
-  CameraController? _cameraController;
-  List<CameraDescription> cameras = [];
+  // CameraController? _cameraController;
+  List<CameraDescription> _cameras = [];
   String? _errorMessage;
   int _currentCameraIndex = 0;
   FlashMode? _flashMode;
+  XFile? _pictureTaken;
 
   // Camera Status
   @override
@@ -22,9 +23,21 @@ class CameraApiModel implements CameraApi {
     onStatusChanged(newStatus);
   }
 
-  // Camera Controller
   @override
-  CameraController? get cameraController => _cameraController;
+  List<CameraDescription> get cameras => _cameras;
+
+  @override
+  Function(List<CameraDescription>) onCamerasChanged = (cameras) {};
+
+  @override
+  void setCameras(List<CameraDescription> newCameras) {
+    _cameras = newCameras;
+    onCamerasChanged(newCameras);
+  }
+
+  // Camera Controller
+  // @override
+  // CameraController? get cameraController => _cameraController;
 
   // Camera Index
   @override
@@ -66,32 +79,94 @@ class CameraApiModel implements CameraApi {
   }
 
   @override
-  Future<void> initializeCamera() async {
-    try {
-      setStatus(CameraStatus.initializing);
-      setErrorMessage(null);
+  XFile? get pictureTaken => _pictureTaken;
 
-      // Get the available cameras
-      cameras = await availableCameras();
+  @override
+  Function(XFile?) onPictureTakenChanged = (pictureTaken) {};
 
-      if (cameras.isEmpty) {
-        setErrorMessage('No cameras found');
-        setStatus(CameraStatus.error);
-        return;
-      }
-
-      // Initialize the camera controller with the first camera
-      _cameraController = CameraController(
-        cameras[currentCameraIndex],
-        ResolutionPreset.high,
-      );
-
-      final cameraController = _cameraController;
-      if (cameraController != null) {
-        await cameraController.initialize();
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-    }
+  @override
+  void setPictureTaken(XFile? newPictureTaken) {
+    _pictureTaken = newPictureTaken;
+    onPictureTakenChanged(newPictureTaken);
   }
+
+  @override
+  void initializeCamera() {
+    // Validation
+    if (status == CameraStatus.initializing) {
+      return; // Already initializing
+    }
+
+    // Update state
+    setStatus(CameraStatus.initializing);
+    setErrorMessage(null);
+
+    // Tell UI to perform the actual initialization
+   setStatus(CameraStatus.initializing);
+  }
+
+   @override
+  void switchCamera() {
+    // Business rule: Can't switch if only one camera
+    if (cameras.length <= 1) {
+      setErrorMessage('Only one camera available');
+      return;
+    }
+
+    // Business rule: Can't switch while taking picture
+    if (status == CameraStatus.takingPicture) {
+      return;
+    }
+
+    // Calculate next camera index (business logic)
+    final newIndex = (_currentCameraIndex + 1) % cameras.length;
+
+    // Update state
+    setStatus(CameraStatus.initializing);
+    setErrorMessage(null);
+    setCurrentCameraIndex(newIndex);
+
+    // Tell UI to perform the actual switch
+    setCurrentCameraIndex(newIndex);
+  }
+
+
+  @override
+  void takePicture() {
+    // Business rules
+    if (status != CameraStatus.ready) {
+      setErrorMessage('Camera not ready');
+      return;
+    }
+
+    setStatus(CameraStatus.takingPicture);
+    // UI will handle the actual picture taking
+  }
+
+    @override
+  void toggleFlash() {
+    // Pure business logic - no platform code
+    FlashMode newMode;
+    switch (flashMode) {
+      case FlashMode.off:
+        newMode = FlashMode.auto;
+        break;
+      case FlashMode.auto:
+        newMode = FlashMode.always;
+        break;
+      case FlashMode.always:
+        newMode = FlashMode.off;
+        break;
+      case null:
+        newMode = FlashMode.auto;
+        break;
+      case FlashMode.torch:
+        newMode = FlashMode.off;
+        break;
+    }
+    setFlashMode(newMode);
+  }
+
+    
+
 }
