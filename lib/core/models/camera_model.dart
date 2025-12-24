@@ -24,6 +24,7 @@ class CameraApiModel implements CameraApi {
     onStatusChanged(newStatus);
   }
 
+  // Cameras
   @override
   List<CameraDescription> get cameras => _cameras;
 
