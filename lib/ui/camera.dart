@@ -33,7 +33,6 @@ class _CameraState extends State<Camera> {
     
     widget.cameraApi.initializeCamera();
 
-    widget.cameraApi.cameraController?.lockCaptureOrientation(DeviceOrientation.portraitUp);
   }
 
   @override
@@ -115,9 +114,11 @@ class _CameraState extends State<Camera> {
             
             // Close button (optional)
             GlassButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: (){
+                // TODO: Implement settings pop-up.
+              },
               child: const Icon(
-                Icons.close,
+                Icons.menu_rounded,
                 color: Colors.white,
                 size: 24,
               ),
