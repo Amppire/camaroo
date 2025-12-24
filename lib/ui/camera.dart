@@ -22,7 +22,7 @@ class _CameraState extends State<Camera> {
     super.initState();
     // Hide status bar for full-screen immersion
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    // Start camera initialization
+    
     widget.cameraApi.initializeCamera();
   }
 
