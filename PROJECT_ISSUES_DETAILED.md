@@ -43,6 +43,14 @@ class HomeAdapter {
 
 // lib/ui/home.dart - View
 class HomePage extends StatefulWidget {
+  const HomePage({super.key, required this.title});
+  final String title;
+  
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final HomeApi homeApi = HomeApiModel();
   late final HomeAdapter homeAdapter = HomeAdapter(homeApi);
   // UI uses ValueListenableBuilder with homeAdapter.counterNotifier

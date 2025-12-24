@@ -219,6 +219,14 @@ class HomeAdapter {
 
 // View (UI)
 class HomePage extends StatefulWidget {
+  const HomePage({super.key, required this.title});
+  final String title;
+  
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final HomeApi homeApi = HomeApiModel();
   late final HomeAdapter homeAdapter = HomeAdapter(homeApi);
   
