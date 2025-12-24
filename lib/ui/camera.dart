@@ -5,34 +5,29 @@ import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:camaroo/core/models/camera_model.dart';
 import 'package:flutter/material.dart';
 
-class SimpleCameraScreen extends StatefulWidget {
-  const SimpleCameraScreen({super.key});
+class Camera extends StatefulWidget {
+  const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
+  final CameraApi cameraApi;
+  final CameraAdapter cameraAdapter;
 
   @override
-  State<SimpleCameraScreen> createState() => _SimpleCameraScreenState();
+  State<Camera> createState() => _CameraState();
 }
 
-class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
-  late final CameraApi cameraApi;
-  late final CameraAdapter cameraAdapter;
-
+class _CameraState extends State<Camera> {
   @override
   void initState() {
     super.initState();
-    
-    // Initialize model and adapter following your architecture
-    cameraApi = CameraApiModel();
-    cameraAdapter = CameraAdapter(cameraApi);
-    
+
     // Start camera initialization
-    cameraApi.initializeCamera();
+    widget.cameraApi.initializeCamera();
   }
 
   @override
   void dispose() {
     // Clean up controller
-    if (cameraApi is CameraApiModel) {
-      (cameraApi as CameraApiModel).dispose();
+    if (widget.cameraApi is CameraApiModel) {
+      (widget.cameraApi as CameraApiModel).dispose();
     }
     super.dispose();
   }
@@ -45,29 +40,29 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
         actions: [
           // Flash toggle button
           ValueListenableBuilder<FlashMode?>(
-            valueListenable: cameraAdapter.flashModeNotifier,
+            valueListenable: widget.cameraAdapter.flashModeNotifier,
             builder: (context, flashMode, _) {
               return IconButton(
                 icon: Icon(_getFlashIcon(flashMode)),
-                onPressed: () => cameraApi.toggleFlash(),
+                onPressed: () => widget.cameraApi.toggleFlash(),
               );
             },
           ),
           // Switch camera button
           ValueListenableBuilder<List<CameraDescription>>(
-            valueListenable: cameraAdapter.camerasNotifier,
+            valueListenable: widget.cameraAdapter.camerasNotifier,
             builder: (context, cameras, _) {
               if (cameras.length <= 1) return const SizedBox.shrink();
               return IconButton(
                 icon: const Icon(Icons.flip_camera_android),
-                onPressed: () => cameraApi.switchCamera(),
+                onPressed: () => widget.cameraApi.switchCamera(),
               );
             },
           ),
         ],
       ),
       body: ValueListenableBuilder<CameraStatus>(
-        valueListenable: cameraAdapter.statusNotifier,
+        valueListenable: widget.cameraAdapter.statusNotifier,
         builder: (context, status, _) {
           return Column(
             children: [
@@ -78,7 +73,7 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
               
               // Error message
               ValueListenableBuilder<String?>(
-                valueListenable: cameraAdapter.errorMessageNotifier,
+                valueListenable: widget.cameraAdapter.errorMessageNotifier,
                 builder: (context, error, _) {
                   if (error == null) return const SizedBox.shrink();
                   return Container(
@@ -105,7 +100,7 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
 
   Widget _buildCameraPreview(CameraStatus status) {
     return ValueListenableBuilder<CameraController?>(
-      valueListenable: cameraAdapter.cameraControllerNotifier,
+      valueListenable: widget.cameraAdapter.cameraControllerNotifier,
       builder: (context, controller, _) {
         if (status == CameraStatus.initializing) {
           return const Center(
@@ -121,7 +116,7 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
                 const Icon(Icons.error_outline, size: 64, color: Colors.grey),
                 const SizedBox(height: 16),
                 ValueListenableBuilder<String?>(
-                  valueListenable: cameraAdapter.errorMessageNotifier,
+                  valueListenable: widget.cameraAdapter.errorMessageNotifier,
                   builder: (context, error, _) {
                     return Text(
                       error ?? 'Camera not available',
@@ -132,7 +127,7 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => cameraApi.initializeCamera(),
+                  onPressed: () => widget.cameraApi.initializeCamera(),
                   child: const Text('Retry'),
                 ),
               ],
@@ -164,7 +159,7 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
         children: [
           // Last picture taken thumbnail
           ValueListenableBuilder<XFile?>(
-            valueListenable: cameraAdapter.pictureTakenNotifier,
+            valueListenable: widget.cameraAdapter.pictureTakenNotifier,
             builder: (context, picture, _) {
               if (picture == null) {
                 return Container(
@@ -192,7 +187,7 @@ class _SimpleCameraScreenState extends State<SimpleCameraScreen> {
           // Capture button
           GestureDetector(
             onTap: status == CameraStatus.ready
-                ? () => cameraApi.takePicture()
+                ? () => widget.cameraApi.takePicture()
                 : null,
             child: Container(
               width: 72,
