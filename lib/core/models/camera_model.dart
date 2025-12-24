@@ -3,7 +3,7 @@ import 'package:camaroo/core/abstractions/camera_api.dart';
 
 class CameraApiModel implements CameraApi {
   CameraStatus _cameraStatus = CameraStatus.initializing;
-  // CameraController? _cameraController;
+  CameraController? _cameraController;
   List<CameraDescription> _cameras = [];
   String? _errorMessage;
   int _currentCameraIndex = 0;
@@ -36,8 +36,16 @@ class CameraApiModel implements CameraApi {
   }
 
   // Camera Controller
-  // @override
-  // CameraController? get cameraController => _cameraController;
+  @override
+  CameraController? get cameraController => _cameraController;
+
+  @override
+  Function(CameraController?) onCameraControllerChanged = (cameraController) {};
+
+  @override void setCameraController(CameraController? newCameraController) {
+    _cameraController = newCameraController;
+    onCameraControllerChanged(newCameraController);
+  }
 
   // Camera Index
   @override

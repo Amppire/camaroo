@@ -10,6 +10,9 @@ class CameraAdapter {
     camerasNotifier = ValueNotifier(cameraApi.cameras);
     cameraApi.onCamerasChanged = (cameras) => camerasNotifier.value = cameras;
 
+    cameraControllerNotifier = ValueNotifier(cameraApi.cameraController);
+    cameraApi.onCameraControllerChanged = (cameraController) => cameraControllerNotifier.value = cameraController;
+
     currentCameraIndexNotifier = ValueNotifier(cameraApi.currentCameraIndex);
     cameraApi.onCurrentCameraIndexChanged = (currentCameraIndex) => currentCameraIndexNotifier.value = currentCameraIndex;
 
@@ -26,6 +29,7 @@ class CameraAdapter {
 
   late final ValueNotifier<CameraStatus> statusNotifier;
   late final ValueNotifier<List<CameraDescription>> camerasNotifier;
+  late final ValueNotifier<CameraController?> cameraControllerNotifier;
   late final ValueNotifier<int> currentCameraIndexNotifier;
   late final ValueNotifier<FlashMode?> flashModeNotifier;
   late final ValueNotifier<String?> errorMessageNotifier;

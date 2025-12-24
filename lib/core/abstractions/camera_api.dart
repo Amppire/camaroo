@@ -10,8 +10,9 @@ abstract class CameraApi {
   void setStatus(CameraStatus newStatus);
 
   // Camera Controller
-    // TODO: Doc.
-    // CameraController? get cameraController;
+  CameraController? get cameraController;
+  Function(CameraController?) onCameraControllerChanged = (cameraController) {};
+  void setCameraController(CameraController? newCameraController);
 
   // Cameras
   // TODO: Doc.
