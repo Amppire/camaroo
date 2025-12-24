@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:camaroo/widgets/camera/glass_button.dart';
+import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
@@ -138,7 +139,7 @@ class _CameraState extends State<Camera> {
             ),
             
             // Capture button
-            _CaptureButton(
+            CaptureButton(
               status: status,
               onPressed: () => widget.cameraApi.takePicture(),
             ),
@@ -230,61 +231,6 @@ class _CameraState extends State<Camera> {
 }
 
 
-// Capture button widget (iOS style)
-class _CaptureButton extends StatelessWidget {
-  final CameraStatus status;
-  final VoidCallback onPressed;
-  
-  const _CaptureButton({
-    required this.status,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isActive = status == CameraStatus.ready;
-    final bool isTaking = status == CameraStatus.takingPicture;
-    
-    return GestureDetector(
-      onTap: isActive ? onPressed : null,
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white,
-            width: 4,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isTaking 
-                  ? Colors.white.withOpacity(0.5)
-                  : Colors.white,
-            ),
-            child: isTaking
-                ? const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                : null,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // Gallery thumbnail widget
 class _GalleryThumbnail extends StatelessWidget {
