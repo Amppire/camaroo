@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class CameraApiModel implements CameraApi {
   CameraStatus _cameraStatus = CameraStatus.uninitialized;
@@ -147,6 +148,10 @@ class CameraApiModel implements CameraApi {
       // Initialize the controller
       await controller.initialize();
 
+      // Lock capture orientation to portrait
+      // Avoids weird behavior where the camera sensor rotates with the device.
+      await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
+
       // Set flash mode
       await controller.setFlashMode(_flashMode ?? FlashMode.off);
 
@@ -234,7 +239,7 @@ class CameraApiModel implements CameraApi {
         newMode = FlashMode.auto;
         break;
     }
-    
+
     setFlashMode(newMode);
   }
 

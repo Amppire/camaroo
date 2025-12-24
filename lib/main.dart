@@ -10,13 +10,7 @@ import 'package:flutter/services.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait orientation only
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-    runApp(Cameroo());
+  runApp(Cameroo());
 }
 
 class Cameroo extends StatelessWidget {
