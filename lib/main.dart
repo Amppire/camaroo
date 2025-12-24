@@ -5,9 +5,18 @@ import 'package:camaroo/ui/camera.dart'; // Your new simple camera screen
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:camaroo/core/models/camera_model.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
+import 'package:flutter/services.dart';
 
-void main() {
-  runApp(Cameroo());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Lock to portrait orientation only
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+    runApp(Cameroo());
 }
 
 class Cameroo extends StatelessWidget {

@@ -98,57 +98,71 @@ class _CameraState extends State<Camera> {
     );
   }
 
-  Widget _buildCameraPreview(CameraStatus status) {
-    return ValueListenableBuilder<CameraController?>(
-      valueListenable: widget.cameraAdapter.cameraControllerNotifier,
-      builder: (context, controller, _) {
-        if (status == CameraStatus.initializing) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
+Widget _buildCameraPreview(CameraStatus status) {
+  return ValueListenableBuilder<CameraController?>(
+    valueListenable: widget.cameraAdapter.cameraControllerNotifier,
+    builder: (context, controller, _) {
+      if (status == CameraStatus.initializing) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      }
 
-        if (status == CameraStatus.error || controller == null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                const SizedBox(height: 16),
-                ValueListenableBuilder<String?>(
-                  valueListenable: widget.cameraAdapter.errorMessageNotifier,
-                  builder: (context, error, _) {
-                    return Text(
-                      error ?? 'Camera not available',
-                      style: const TextStyle(color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => widget.cameraApi.initializeCamera(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (!controller.value.isInitialized) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // Show camera preview
+      if (status == CameraStatus.error || controller == null) {
         return Center(
-          child: AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: CameraPreview(controller),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              ValueListenableBuilder<String?>(
+                valueListenable: widget.cameraAdapter.errorMessageNotifier,
+                builder: (context, error, _) {
+                  return Text(
+                    error ?? 'Camera not available',
+                    style: const TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => widget.cameraApi.initializeCamera(),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         );
-      },
-    );
-  }
+      }
+
+      if (!controller.value.isInitialized) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      // Calculate proper aspect ratio for portrait mode
+      // Camera gives us landscape ratio, we need to invert it for portrait
+      final size = MediaQuery.of(context).size;
+      final scale = 1 / (controller.value.aspectRatio * size.aspectRatio);
+
+      return Container(
+        color: Colors.black,
+        child: ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.center,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: size.width,
+                height: size.width * controller.value.aspectRatio,
+                child: CameraPreview(controller),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildControls(CameraStatus status) {
     return Container(
