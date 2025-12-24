@@ -3,6 +3,8 @@ import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+/// Heart of the camera app. Displays the live camera feed. This takes up the entire screen.
+/// TODO: Add pinch to zoom.
 class Viewfinder extends StatelessWidget {
   const Viewfinder({super.key, required this.cameraApi, required this.cameraAdapter, required this.status});
   final CameraApi cameraApi;

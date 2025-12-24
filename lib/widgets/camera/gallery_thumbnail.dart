@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 
+/// Thumbnail for the gallery. Displays the last picture taken and is used to navigate to the gallery.
+// TODO: Add a way to navigate to the gallery.
 class GalleryThumbnail extends StatelessWidget {
   final XFile? picture;
   

@@ -2,6 +2,7 @@
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
 
+/// Center camprute button for taking pictures.
 class CaptureButton extends StatelessWidget {
   final CameraStatus status;
   final VoidCallback onPressed;
