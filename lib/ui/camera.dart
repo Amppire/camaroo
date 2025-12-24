@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
-import 'package:camaroo/widgets/viewfinder.dart';
+import 'package:camaroo/widgets/camera/glass_button.dart';
+import 'package:camaroo/widgets/camera/viewfinder.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
@@ -93,7 +94,7 @@ class _CameraState extends State<Camera> {
             ValueListenableBuilder<FlashMode?>(
               valueListenable: widget.cameraAdapter.flashModeNotifier,
               builder: (context, flashMode, _) {
-                return _GlassButton(
+                return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   child: Icon(
                     _getFlashIcon(flashMode),
@@ -105,7 +106,7 @@ class _CameraState extends State<Camera> {
             ),
             
             // Close button (optional)
-            _GlassButton(
+            GlassButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Icon(
                 Icons.close,
@@ -149,7 +150,7 @@ class _CameraState extends State<Camera> {
                 if (cameras.length <= 1) {
                   return const SizedBox(width: 56); // Spacer for symmetry
                 }
-                return _GlassButton(
+                return GlassButton(
                   onPressed: () => widget.cameraApi.switchCamera(),
                   child: const Icon(
                     Icons.flip_camera_ios,
@@ -228,46 +229,6 @@ class _CameraState extends State<Camera> {
   }
 }
 
-// Glass morphism button widget
-class _GlassButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  final Widget child;
-  
-  const _GlassButton({
-    required this.onPressed,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onPressed,
-              borderRadius: BorderRadius.circular(28),
-              child: Center(child: child),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // Capture button widget (iOS style)
 class _CaptureButton extends StatelessWidget {
