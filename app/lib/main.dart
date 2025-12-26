@@ -3,7 +3,7 @@ import 'package:camaroo/utils/app_constants.dart';
 import 'package:camaroo/utils/theme_constants.dart';
 import 'package:camaroo/ui/camera.dart'; // Your new simple camera screen
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camaroo/core/models/camera_model.dart';
+import 'package:camaroo/core/services/camera_service.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:storage/storage.dart';
 

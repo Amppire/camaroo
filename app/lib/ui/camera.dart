@@ -6,7 +6,7 @@ import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camaroo/core/models/camera_model.dart';
+import 'package:camaroo/core/services/camera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
