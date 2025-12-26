@@ -1,6 +1,6 @@
 import 'providers/storage_provider.dart';
 import 'providers/local_storage_provider.dart';
-import 'exceptions/storage_exception.dart';
+import 'exceptions/storage_exceptions.dart';
 
 /// Main storage service that uses a provider pattern
 class StorageService {
