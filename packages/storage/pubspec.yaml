@@ -1,0 +1,14 @@
+name: storage
+description: A platform-agnostic storage package that supports local and cloud storage
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  shared_preferences: ^2.3.4  # For local storage
+  # Future: Add cloud storage SDKs here when needed
+
+dev_dependencies:
+  test: ^1.24.0

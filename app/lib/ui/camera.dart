@@ -6,7 +6,7 @@ import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camaroo/core/models/camera_model.dart';
+import 'package:camaroo/core/services/camera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -26,9 +26,8 @@ class _CameraState extends State<Camera> {
 
     // Hide status bar for full-screen immersion
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    
-    widget.cameraApi.initializeCamera();
 
+    widget.cameraApi.initializeCamera();
   }
 
   @override
@@ -53,24 +52,18 @@ class _CameraState extends State<Camera> {
             fit: StackFit.expand,
             children: [
               // Camera Preview (full screen)
-              Viewfinder(cameraApi: widget.cameraApi, cameraAdapter: widget.cameraAdapter, status: status),
-              
+              Viewfinder(
+                cameraApi: widget.cameraApi,
+                cameraAdapter: widget.cameraAdapter,
+                status: status,
+              ),
+
               // Top controls overlay
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: _buildTopControls(),
-              ),
-              
+              Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
+
               // Bottom controls overlay
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _buildBottomControls(status),
-              ),
-              
+              Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomControls(status)),
+
               // Error message overlay
               Positioned(
                 top: MediaQuery.of(context).padding.top + 60,
@@ -99,25 +92,17 @@ class _CameraState extends State<Camera> {
               builder: (context, flashMode, _) {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
-                  child: Icon(
-                    _getFlashIcon(flashMode),
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: Icon(_getFlashIcon(flashMode), color: Colors.white, size: 24),
                 );
               },
             ),
-            
+
             // Close button (optional)
             GlassButton(
-              onPressed: (){
+              onPressed: () {
                 // TODO: Implement settings pop-up.
               },
-              child: const Icon(
-                Icons.menu_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
             ),
           ],
         ),
@@ -141,13 +126,10 @@ class _CameraState extends State<Camera> {
                 return GalleryThumbnail(picture: picture);
               },
             ),
-            
+
             // Capture button
-            CaptureButton(
-              status: status,
-              onPressed: () => widget.cameraApi.takePicture(),
-            ),
-            
+            CaptureButton(status: status, onPressed: () => widget.cameraApi.takePicture()),
+
             // Camera flip button
             ValueListenableBuilder<List<CameraDescription>>(
               valueListenable: widget.cameraAdapter.camerasNotifier,
@@ -157,11 +139,7 @@ class _CameraState extends State<Camera> {
                 }
                 return GlassButton(
                   onPressed: () => widget.cameraApi.switchCamera(),
-                  child: const Icon(
-                    Icons.flip_camera_ios,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                  child: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 28),
                 );
               },
             ),
@@ -176,7 +154,7 @@ class _CameraState extends State<Camera> {
       valueListenable: widget.cameraAdapter.errorMessageNotifier,
       builder: (context, error, _) {
         if (error == null) return const SizedBox.shrink();
-        
+
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: BackdropFilter(
@@ -186,18 +164,11 @@ class _CameraState extends State<Camera> {
               decoration: BoxDecoration(
                 color: Colors.red.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.red.withOpacity(0.3),
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
