@@ -218,10 +218,10 @@ class CameraApiModel implements CameraApi {
     try {
       final XFile picture = await _cameraController!.takePicture();
       setPictureTaken(picture);
+
       final photo = Photo(id: picture.path, filePath: picture.path, capturedAt: DateTime.now());
       await _photoStorageService.savePhoto(photo);
 
-      final count = await _photoStorageService.getAllPhotos();
       setStatus(CameraStatus.ready);
     } on CameraException catch (e) {
       setErrorMessage('Failed to take picture: ${e.description}');
