@@ -1,8 +1,8 @@
-import 'providers/storage_provider.dart';
-import 'providers/local_storage_provider.dart';
-import 'exceptions/storage_exceptions.dart';
-import 'abstractions/photo_storage_service_api.dart';
-import 'services/photo_storage_service.dart';
+import '../providers/storage_provider.dart';
+import '../providers/local_storage_provider.dart';
+import '../exceptions/storage_exceptions.dart';
+import '../abstractions/photo_storage_service_api.dart';
+import 'photo_storage_service.dart';
 
 /// Main storage service that uses a provider pattern
 /// Provides access to both generic storage and domain-specific services

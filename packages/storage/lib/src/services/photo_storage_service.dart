@@ -1,5 +1,5 @@
 import 'dart:convert';
-import '../storage_service.dart';
+import 'storage_service.dart';
 import '../exceptions/storage_exceptions.dart';
 import '../models/photo.dart';
 import '../abstractions/photo_storage_service_api.dart';
