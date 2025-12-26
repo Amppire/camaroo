@@ -1,3 +1,4 @@
+import 'package:camaroo/ui/camera.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/foundation.dart';
@@ -7,8 +8,8 @@ class CameraApiModel implements CameraApi {
   CameraStatus _cameraStatus = CameraStatus.uninitialized;
   CameraController? _cameraController;
   List<CameraDescription> _cameras = [];
+  CameraDescription? _currentCamera;
   String? _errorMessage;
-  int _currentCameraIndex = 0;
   FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
 
@@ -51,17 +52,17 @@ class CameraApiModel implements CameraApi {
     onCameraControllerChanged(newCameraController);
   }
 
-  // Camera Index
+  // Current Camera
   @override
-  int get currentCameraIndex => _currentCameraIndex;
+  CameraDescription? get currentCamera => _currentCamera;
 
   @override
-  Function(int) onCurrentCameraIndexChanged = (currentCameraIndex) {};
+  Function(CameraDescription?) onCurrentCameraChanged = (currentCamera) {};
 
   @override
-  void setCurrentCameraIndex(int newCameraIndex) {
-    _currentCameraIndex = newCameraIndex;
-    onCurrentCameraIndexChanged(newCameraIndex);
+  void setCurrentCamera(CameraDescription? newCurrentCamera) {
+    _currentCamera = newCurrentCamera;
+    onCurrentCameraChanged(newCurrentCamera);
   }
 
   // Flash Mode
@@ -137,7 +138,7 @@ class CameraApiModel implements CameraApi {
       await _cameraController?.dispose();
 
       // Create new controller with current camera
-      final camera = _cameras[_currentCameraIndex];
+      final camera = _currentCamera ?? _cameras.first;
       final controller = CameraController(
         camera,
         ResolutionPreset.high,
@@ -182,8 +183,9 @@ class CameraApiModel implements CameraApi {
     }
 
     // Calculate next camera index (business logic)
-    final newIndex = (_currentCameraIndex + 1) % cameras.length;
-    setCurrentCameraIndex(newIndex);
+    final newCameraIndex =
+        (_cameras.indexOf(_currentCamera!) + 1) % cameras.length;
+    setCurrentCamera(_cameras[newCameraIndex]);
 
     // Re-initialize with new camera
     await initializeCamera();

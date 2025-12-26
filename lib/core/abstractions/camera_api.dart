@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 
-enum CameraStatus {uninitialized, initializing, ready, error, takingPicture}
+enum CameraStatus { uninitialized, initializing, ready, error, takingPicture }
 
 abstract class CameraApi {
   // Camera Status
@@ -20,11 +20,10 @@ abstract class CameraApi {
   Function(List<CameraDescription>) onCamerasChanged = (cameras) {};
   void setCameras(List<CameraDescription> newCameras);
 
-  // Camera Index
-  // TODO: Doc.
-  int get currentCameraIndex;
-  Function(int) onCurrentCameraIndexChanged = (currentCameraIndex) {};
-  void setCurrentCameraIndex(int newCameraIndex);
+  // Current Camera
+  CameraDescription? get currentCamera;
+  Function(CameraDescription?) onCurrentCameraChanged = (currentCamera) {};
+  void setCurrentCamera(CameraDescription? newCurrentCamera);
 
   // Flash Mode
   // TODO: Doc.
@@ -46,25 +45,24 @@ abstract class CameraApi {
 
   /// Functions
   /// ---------------------------------------------------------------------------
-  
-  /// Initialzes phone's camera. 
+
+  /// Initialzes phone's camera.
   /// Will return error if no cameras are found or if the camera is not available.
-  /// 
+  ///
   void initializeCamera();
 
   /// Switches to the next camera.
   /// Will return error if there is only one camera or if the camera is not available.
-  /// 
+  ///
   void switchCamera();
 
   /// Takes a picture.
   /// Will return error if the camera is not ready.
-  /// 
+  ///
   void takePicture();
 
   /// Toggles the flash mode.
   /// Will return error if the flash mode is not available.
-  /// 
+  ///
   void toggleFlash();
-
 }
