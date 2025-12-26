@@ -1,18 +1,13 @@
-import 'package:camaroo/core/models/photo_storage_service.dart';
-import 'package:camaroo/data_models/photo.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camaroo/core/abstractions/photo_storage_service_api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:storage/storage.dart';
 
 class CameraApiModel implements CameraApi {
   CameraApiModel({required StorageService storageService}) : _storageService = storageService;
+
   final StorageService _storageService;
-  late final PhotoStorageServiceApi _photoStorageService = PhotoStorageService(
-    storageService: _storageService,
-  );
 
   CameraStatus _cameraStatus = CameraStatus.uninitialized;
   CameraController? _cameraController;
@@ -220,8 +215,7 @@ class CameraApiModel implements CameraApi {
       setPictureTaken(picture);
 
       final photo = Photo(id: picture.path, filePath: picture.path, capturedAt: DateTime.now());
-      await _photoStorageService.savePhoto(photo);
-
+      await _storageService.photos.savePhoto(photo);
       setStatus(CameraStatus.ready);
     } on CameraException catch (e) {
       setErrorMessage('Failed to take picture: ${e.description}');

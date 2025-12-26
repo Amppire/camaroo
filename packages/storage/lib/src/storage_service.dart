@@ -1,12 +1,20 @@
 import 'providers/storage_provider.dart';
 import 'providers/local_storage_provider.dart';
 import 'exceptions/storage_exceptions.dart';
+import 'abstractions/photo_storage_service_api.dart';
+import 'services/photo_storage_service.dart';
 
 /// Main storage service that uses a provider pattern
+/// Provides access to both generic storage and domain-specific services
 class StorageService {
   final StorageProvider _provider;
 
-  StorageService({StorageProvider? provider}) : _provider = provider ?? LocalStorageProvider();
+  // Lazy-initialized domain-specific services
+  PhotoStorageServiceApi? _photoStorageService;
+
+  StorageService({StorageProvider? provider, PhotoStorageServiceApi? photoStorageService})
+    : _provider = provider ?? LocalStorageProvider(),
+      _photoStorageService = photoStorageService;
 
   /// Singleton instance for convenience
   static StorageService? _instance;
@@ -16,10 +24,33 @@ class StorageService {
     return _instance!;
   }
 
-  /// Initialize with a custom provider
-  static void initialize({required StorageProvider provider}) {
-    _instance = StorageService(provider: provider);
+  /// Initialize with a custom provider and optional service overrides
+  static void initialize({
+    required StorageProvider provider,
+    PhotoStorageServiceApi? photoStorageService,
+  }) {
+    _instance = StorageService(provider: provider, photoStorageService: photoStorageService);
   }
+
+  // ============================================================
+  // Domain-Specific Services (Facade Pattern)
+  // ============================================================
+
+  /// Access to photo storage operations
+  /// Usage: StorageService.instance.photos.savePhoto(photo)
+  PhotoStorageServiceApi get photos {
+    _photoStorageService ??= PhotoStorageService(storageService: this);
+    return _photoStorageService!;
+  }
+
+  // Future services can be added here:
+  // VideoStorageServiceApi get videos { ... }
+  // SettingsStorageServiceApi get settings { ... }
+  // UserStorageServiceApi get users { ... }
+
+  // ============================================================
+  // Generic Storage Operations
+  // ============================================================
 
   /// Save data with a key
   Future<void> save(String key, dynamic value) async {

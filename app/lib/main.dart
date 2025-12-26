@@ -1,4 +1,3 @@
-import 'package:camaroo/core/models/photo_storage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:camaroo/utils/app_constants.dart';
 import 'package:camaroo/utils/theme_constants.dart';
@@ -20,25 +19,18 @@ class Cameroo extends StatelessWidget {
     storageService = StorageService();
     cameraApi = CameraApiModel(storageService: storageService);
     cameraAdapter = CameraAdapter(cameraApi);
-    photoStorageService = PhotoStorageService(storageService: storageService);
   }
 
   late final StorageService storageService;
   late final CameraApi cameraApi;
   late final CameraAdapter cameraAdapter;
 
-  late final PhotoStorageServiceApi photoStorageService;
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: AppConstants.appName,
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: ThemeConstants.primaryColor)),
-      home: Camera(
-        cameraApi: cameraApi,
-        cameraAdapter: cameraAdapter,
-        photoStorageService: photoStorageService,
-      ), // Use the new simple camera
+      home: Camera(cameraApi: cameraApi, cameraAdapter: cameraAdapter), // Use the new simple camera
     );
   }
 }

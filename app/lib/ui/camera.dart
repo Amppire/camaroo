@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:camaroo/core/abstractions/photo_storage_service_api.dart';
 import 'package:camaroo/widgets/camera/glass_button.dart';
 import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
@@ -12,15 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class Camera extends StatefulWidget {
-  const Camera({
-    super.key,
-    required this.cameraApi,
-    required this.cameraAdapter,
-    required this.photoStorageService,
-  });
+  const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
   final CameraApi cameraApi;
   final CameraAdapter cameraAdapter;
-  final PhotoStorageServiceApi photoStorageService;
 
   @override
   State<Camera> createState() => _CameraState();
