@@ -5,7 +5,6 @@ import 'package:camaroo/ui/camera.dart'; // Your new simple camera screen
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:camaroo/core/models/camera_model.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
-import 'package:camaroo/core/abstractions/photo_storage_service_api.dart';
 import 'package:storage/storage.dart';
 
 void main() async {
