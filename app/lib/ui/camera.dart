@@ -59,12 +59,6 @@ class _CameraState extends State<Camera> {
                 status: status,
               ),
 
-              Viewfinder(
-                cameraApi: widget.cameraApi,
-                cameraAdapter: widget.cameraAdapter,
-                status: status,
-              ),
-
               // Top controls overlay
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
