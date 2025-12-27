@@ -152,6 +152,7 @@ Future<void> initializeCamera() async {
     return;
   }
 
+
   // Update state
   setStatus(CameraStatus.initializing);
   setErrorMessage(null);
@@ -167,6 +168,9 @@ Future<void> initializeCamera() async {
       _currentCamera = _cameras.first;
       onCurrentCameraChanged(_currentCamera);
     }
+
+      await _getAllCameraZoomRanges();
+
 
     // Business rule: Must have at least one camera
     if (_cameras.isEmpty) {
@@ -314,6 +318,7 @@ Future<void> setZoom(double zoom) async {
     return;
   }
 
+
   try {
     final minZoom = minZoomLevel;
     final maxZoom = maxZoomLevel;
@@ -328,6 +333,26 @@ Future<void> setZoom(double zoom) async {
     await _cameraController!.setZoomLevel(clampedZoom.toDouble());
   } catch (e) {
     print('Error setting zoom: $e');
+  }
+}
+
+Future<void> _getAllCameraZoomRanges() async {
+  for (final camera in cameras) {
+    CameraController tempController = CameraController(
+      camera,
+      ResolutionPreset.max,
+      enableAudio: false,
+    );
+    try {
+      await tempController.initialize();
+      double minZoom = await tempController.getMinZoomLevel();
+      double maxZoom = await tempController.getMaxZoomLevel();
+      print('Camera: ${camera.name}, Min Zoom: $minZoom, Max Zoom: $maxZoom');
+      await tempController.dispose();
+    } catch (e) {
+      print('Failed to get zoom range for camera ${camera.name}: $e');
+      await tempController.dispose();
+    }
   }
 }
 
