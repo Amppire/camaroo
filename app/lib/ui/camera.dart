@@ -3,6 +3,7 @@ import 'package:camaroo/widgets/camera/glass_button.dart';
 import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
 import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
+import 'package:camaroo/widgets/camera/flip_button.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
@@ -58,7 +59,15 @@ class _CameraState extends State<Camera> {
                 status: status,
               ),
 
+              Viewfinder(
+                cameraApi: widget.cameraApi,
+                cameraAdapter: widget.cameraAdapter,
+                status: status,
+              ),
+
               // Top controls overlay
+              Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
+
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
               // Bottom controls overlay
@@ -92,6 +101,7 @@ class _CameraState extends State<Camera> {
               builder: (context, flashMode, _) {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
+                  onLongPress: () => {},
                   child: Icon(_getFlashIcon(flashMode), color: Colors.white, size: 24),
                 );
               },
@@ -137,9 +147,14 @@ class _CameraState extends State<Camera> {
                 if (cameras.length <= 1) {
                   return const SizedBox(width: 56); // Spacer for symmetry
                 }
-                return GlassButton(
-                  onPressed: () => widget.cameraApi.switchCamera(),
-                  child: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 28),
+                return ValueListenableBuilder<CameraDescription?>(
+                  valueListenable: widget.cameraAdapter.currentCameraNotifier,
+                  builder: (context, currentCamera, _) {
+                    if (currentCamera == null) {
+                      return const SizedBox(width: 56);
+                    }
+                    return FlipButton(cameraApi: widget.cameraApi, currentCamera: currentCamera);
+                  },
                 );
               },
             ),

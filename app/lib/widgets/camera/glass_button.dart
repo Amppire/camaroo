@@ -2,15 +2,17 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Helper class to create buttons that are transparent and have a glass effect (e.g. flash).
-/// 
+///
 class GlassButton extends StatelessWidget {
-    final VoidCallback onPressed;
+  final VoidCallback onPressed;
   final Widget child;
-  
+  final VoidCallback? onLongPress;
+
   const GlassButton({
     super.key,
     required this.onPressed,
     required this.child,
+    this.onLongPress,
   });
 
   @override
@@ -33,6 +35,7 @@ class GlassButton extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
+              onLongPress: onLongPress,
               onTap: onPressed,
               borderRadius: BorderRadius.circular(28),
               child: Center(child: child),

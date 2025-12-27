@@ -12,8 +12,8 @@ class CameraApiModel implements CameraApi {
   CameraStatus _cameraStatus = CameraStatus.uninitialized;
   CameraController? _cameraController;
   List<CameraDescription> _cameras = [];
+  CameraDescription? _currentCamera;
   String? _errorMessage;
-  int _currentCameraIndex = 0;
   FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
 
@@ -56,17 +56,17 @@ class CameraApiModel implements CameraApi {
     onCameraControllerChanged(newCameraController);
   }
 
-  // Camera Index
+  // Current Camera
   @override
-  int get currentCameraIndex => _currentCameraIndex;
+  CameraDescription? get currentCamera => _currentCamera;
 
   @override
-  Function(int) onCurrentCameraIndexChanged = (currentCameraIndex) {};
+  Function(CameraDescription?) onCurrentCameraChanged = (currentCamera) {};
 
   @override
-  void setCurrentCameraIndex(int newCameraIndex) {
-    _currentCameraIndex = newCameraIndex;
-    onCurrentCameraIndexChanged(newCameraIndex);
+  void setCurrentCamera(CameraDescription? newCurrentCamera) {
+    _currentCamera = newCurrentCamera;
+    onCurrentCameraChanged(newCurrentCamera);
   }
 
   // Flash Mode
@@ -128,7 +128,12 @@ class CameraApiModel implements CameraApi {
       // Get available cameras if not already loaded
       if (_cameras.isEmpty) {
         _cameras = await availableCameras();
+        _cameras.sort(
+          (a, b) => b.lensDirection.name.compareTo(a.lensDirection.name),
+        );
         onCamerasChanged(_cameras);
+        _currentCamera = _cameras.first;
+        onCurrentCameraChanged(_currentCamera);
       }
 
       // Business rule: Must have at least one camera
@@ -142,7 +147,13 @@ class CameraApiModel implements CameraApi {
       await _cameraController?.dispose();
 
       // Create new controller with current camera
-      final camera = _cameras[_currentCameraIndex];
+      final camera = _currentCamera;
+      if (camera == null) {
+        setErrorMessage('No camera selected');
+        setStatus(CameraStatus.error);
+        return;
+      }
+
       final controller = CameraController(
         camera,
         ResolutionPreset.high,
@@ -186,9 +197,15 @@ class CameraApiModel implements CameraApi {
       return;
     }
 
-    // Calculate next camera index (business logic)
-    final newIndex = (_currentCameraIndex + 1) % cameras.length;
-    setCurrentCameraIndex(newIndex);
+    // Switch between front camera and main rear camera
+    for (final camera in cameras) {
+      final currentCamera = _currentCamera!;
+      if (camera != _currentCamera &&
+          camera.lensDirection != currentCamera.lensDirection) {
+        setCurrentCamera(camera);
+        break;
+      }
+    }
 
     // Re-initialize with new camera
     await initializeCamera();
