@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camaroo/utils/theme_constants.dart';
 import 'dart:ui';
 import 'dart:math' as math;
+import 'package:camaroo/utils/painters/zoom_track_painter.dart';
 
 class ZoomSlider extends StatelessWidget {
 
@@ -108,7 +109,7 @@ class ZoomSlider extends StatelessWidget {
                 // Background track with markers
                 Positioned.fill(
                   child: CustomPaint(
-                    painter: _ZoomTrackPainter(
+                    painter: ZoomTrackPainter(
                       minZoom: minZoom,
                       maxZoom: maxZoom,
                       zoomStops: _zoomStops,
@@ -167,40 +168,3 @@ class ZoomSlider extends StatelessWidget {
   }
 }
 
-class _ZoomTrackPainter extends CustomPainter {
-  final double minZoom;
-  final double maxZoom;
-  final List<double> zoomStops;
-  final double Function(double) zoomToSlider;
-
-  _ZoomTrackPainter({
-    required this.minZoom,
-    required this.maxZoom,
-    required this.zoomStops,
-    required this.zoomToSlider,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = ThemeConstants.textAndIconColor.withValues(alpha: 0.4)
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-
-    // Draw markers for zoom stops (using logarithmic positions)
-    for (final stop in zoomStops) {
-      final position = zoomToSlider(stop);
-      final x = position * size.width;
-
-      // Draw vertical line
-      canvas.drawLine(
-        Offset(x, size.height / 2 - 6),
-        Offset(x, size.height / 2 + 6),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ZoomTrackPainter oldDelegate) => false;
-}
