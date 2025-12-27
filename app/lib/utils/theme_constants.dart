@@ -9,10 +9,10 @@ class ThemeConstants {
   static const Color secondaryColor = Color(0xFF14B8A6);
   
   // Background color - Dark theme for camera app UI
-  static const Color backgroundColor = Color(0xFF121212);
+  static const Color backgroundColor= Color(0xFF121212);
   
   // Text color - Light text for dark backgrounds
-  static const Color textColor = Color(0xFFE5E5E5);
+  static const Color textAndIconColor = Color(0xFFE5E5E5);
   
   // Accent color - Vibrant red/orange for capture button and important actions
   static const Color accentColor = Color(0xFFEF4444);
@@ -23,4 +23,6 @@ class ThemeConstants {
   static const Color successColor = Color(0xFF10B981);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color disabledColor = Color(0xFF6B7280);
+
+  
 }

@@ -1,3 +1,4 @@
+import 'package:camaroo/utils/app_constants.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/foundation.dart';
@@ -129,7 +130,7 @@ class CameraApiModel implements CameraApi {
       if (_cameras.isEmpty) {
         _cameras = await availableCameras();
         _cameras.sort(
-          (a, b) => b.lensDirection.name.compareTo(a.lensDirection.name),
+          (a, b) => a.lensDirection.name.compareTo(b.lensDirection.name),
         );
         onCamerasChanged(_cameras);
         _currentCamera = _cameras.first;
@@ -138,7 +139,7 @@ class CameraApiModel implements CameraApi {
 
       // Business rule: Must have at least one camera
       if (_cameras.isEmpty) {
-        setErrorMessage('No cameras found on this device');
+        setErrorMessage(AppConstants.noCamerasFound);
         setStatus(CameraStatus.error);
         return;
       }
@@ -149,7 +150,7 @@ class CameraApiModel implements CameraApi {
       // Create new controller with current camera
       final camera = _currentCamera;
       if (camera == null) {
-        setErrorMessage('No camera selected');
+        setErrorMessage(AppConstants.noCameraSelected);
         setStatus(CameraStatus.error);
         return;
       }
@@ -175,10 +176,10 @@ class CameraApiModel implements CameraApi {
       setCameraController(controller);
       setStatus(CameraStatus.ready);
     } on CameraException catch (e) {
-      setErrorMessage('Camera error: ${e.description}');
+      setErrorMessage('${AppConstants.cameraNotReady} ${e.description}');
       setStatus(CameraStatus.error);
     } catch (e) {
-      setErrorMessage('Unexpected error: $e');
+      setErrorMessage('${AppConstants.unexpectedError} $e');
       setStatus(CameraStatus.error);
     }
   }
@@ -187,13 +188,13 @@ class CameraApiModel implements CameraApi {
   Future<void> switchCamera() async {
     // Business rule: Can't switch if only one camera
     if (cameras.length <= 1) {
-      setErrorMessage('Only one camera available');
+      setErrorMessage(AppConstants.onlyOneCameraAvailable);
       return;
     }
 
     // Business rule: Can't switch while taking picture
     if (status == CameraStatus.takingPicture) {
-      setErrorMessage('Cannot switch while taking picture');
+      setErrorMessage(AppConstants.cannotSwitchWhileTakingPicture);
       return;
     }
 
@@ -215,12 +216,12 @@ class CameraApiModel implements CameraApi {
   Future<void> takePicture() async {
     // Business rules: Camera must be ready
     if (status != CameraStatus.ready) {
-      setErrorMessage('Camera not ready');
+      setErrorMessage(AppConstants.cameraNotReady);
       return;
     }
 
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      setErrorMessage('Camera controller not initialized');
+      setErrorMessage(AppConstants.cameraControllerNotInitialized);
       return;
     }
 
@@ -235,10 +236,10 @@ class CameraApiModel implements CameraApi {
       await _storageService.photos.savePhoto(photo);
       setStatus(CameraStatus.ready);
     } on CameraException catch (e) {
-      setErrorMessage('Failed to take picture: ${e.description}');
+      setErrorMessage('${AppConstants.failedToTakePicture} ${e.description}');
       setStatus(CameraStatus.ready);
     } catch (e) {
-      setErrorMessage('Unexpected error: $e');
+      setErrorMessage('${AppConstants.unexpectedError} $e');
       setStatus(CameraStatus.ready);
     }
   }
@@ -278,7 +279,7 @@ class CameraApiModel implements CameraApi {
         await _cameraController!.setFlashMode(_flashMode!);
       } catch (e) {
         if (kDebugMode) {
-          print('Failed to set flash mode: $e');
+          print('${AppConstants.failedToSetFlashMode} $e');
         }
       }
     }
