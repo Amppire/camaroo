@@ -12,11 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class Camera extends StatefulWidget {
-  const Camera({
-    super.key,
-    required this.cameraApi,
-    required this.cameraAdapter,
-  });
+  const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
   final CameraApi cameraApi;
   final CameraAdapter cameraAdapter;
 
@@ -31,7 +27,6 @@ class _CameraState extends State<Camera> {
 
     // Hide status bar for full-screen immersion
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
 
     widget.cameraApi.initializeCamera();
   }
@@ -76,12 +71,7 @@ class _CameraState extends State<Camera> {
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
               // Bottom controls overlay
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _buildBottomControls(status),
-              ),
+              Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomControls(status)),
 
               // Error message overlay
               Positioned(
@@ -112,19 +102,13 @@ class _CameraState extends State<Camera> {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   onLongPress: () => {},
-                  child: Icon(
-                    _getFlashIcon(flashMode),
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: Icon(_getFlashIcon(flashMode), color: Colors.white, size: 24),
                 );
               },
             ),
 
-
             // Close button (optional)
             GlassButton(
-              onPressed: () {
               onPressed: () {
                 // TODO: Implement settings pop-up.
               },
@@ -140,12 +124,7 @@ class _CameraState extends State<Camera> {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
-          bottom: 20,
-          top: 20,
-        ),
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 20),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -158,12 +137,8 @@ class _CameraState extends State<Camera> {
               },
             ),
 
-
             // Capture button
-            CaptureButton(
-              status: status,
-              onPressed: () => widget.cameraApi.takePicture(),
-            ),
+            CaptureButton(status: status, onPressed: () => widget.cameraApi.takePicture()),
 
             // Camera flip button
             ValueListenableBuilder<List<CameraDescription>>(
@@ -178,10 +153,7 @@ class _CameraState extends State<Camera> {
                     if (currentCamera == null) {
                       return const SizedBox(width: 56);
                     }
-                    return FlipButton(
-                      cameraApi: widget.cameraApi,
-                      currentCamera: currentCamera,
-                    );
+                    return FlipButton(cameraApi: widget.cameraApi, currentCamera: currentCamera);
                   },
                 );
               },
@@ -197,7 +169,6 @@ class _CameraState extends State<Camera> {
       valueListenable: widget.cameraAdapter.errorMessageNotifier,
       builder: (context, error, _) {
         if (error == null) return const SizedBox.shrink();
-
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
@@ -248,4 +219,3 @@ class _CameraState extends State<Camera> {
     }
   }
 }
-
