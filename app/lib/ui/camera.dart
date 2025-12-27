@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:camaroo/utils/theme_constants.dart';
 import 'package:camaroo/widgets/camera/glass_button.dart';
 import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
@@ -7,7 +8,6 @@ import 'package:camaroo/widgets/camera/flip_button.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camaroo/core/services/camera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -50,7 +50,7 @@ class _CameraState extends State<Camera> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: ThemeConstants.backgroundColor,
       body: ValueListenableBuilder<CameraStatus>(
         valueListenable: widget.cameraAdapter.statusNotifier,
         builder: (context, status, _) {
@@ -101,7 +101,7 @@ class _CameraState extends State<Camera> {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   onLongPress: () => {},
-                  child: Icon(_getFlashIcon(flashMode), color: Colors.white, size: 24),
+                  child: Icon(_getFlashIcon(flashMode), color: ThemeConstants.textAndIconColor, size: 24),
                 );
               },
             ),
@@ -111,7 +111,7 @@ class _CameraState extends State<Camera> {
               onPressed: () {
                 // TODO: Implement settings pop-up.
               },
-              child: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+              child: const Icon(Icons.menu_rounded, color: ThemeConstants.textAndIconColor, size: 24),
             ),
           ],
         ),
@@ -176,19 +176,19 @@ class _CameraState extends State<Camera> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.3),
+                color: ThemeConstants.errorColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
+                border: Border.all(color: ThemeConstants.errorColor.withValues(alpha: 0.3), width: 1),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  const Icon(Icons.error_outline, color: ThemeConstants.textAndIconColor, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       error,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: ThemeConstants.textAndIconColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
