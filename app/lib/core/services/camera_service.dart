@@ -129,7 +129,7 @@ class CameraApiModel implements CameraApi {
       if (_cameras.isEmpty) {
         _cameras = await availableCameras();
         _cameras.sort(
-          (a, b) => b.lensDirection.name.compareTo(a.lensDirection.name),
+          (a, b) => a.lensDirection.name.compareTo(b.lensDirection.name),
         );
         onCamerasChanged(_cameras);
         _currentCamera = _cameras.first;
