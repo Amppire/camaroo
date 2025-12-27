@@ -1,4 +1,3 @@
-import 'package:camaroo/ui/camera.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/foundation.dart';
