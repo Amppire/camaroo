@@ -326,7 +326,6 @@ Future<void> setZoom(double zoom) async {
     );
     
     await _cameraController!.setZoomLevel(clampedZoom.toDouble());
-    setZoomLevel(clampedZoom);
   } catch (e) {
     print('Error setting zoom: $e');
   }
