@@ -19,7 +19,11 @@ class FlipButton extends StatelessWidget {
     return GlassButton(
       onPressed: () => cameraApi.switchCamera(),
       onLongPress: () => _showLensMenu(context),
-      child: Icon(_getLensIcon(currentCamera), color: Colors.white, size: 24),
+      child: Icon(
+        Icons.flip_camera_ios_outlined,
+        color: Colors.white,
+        size: 24,
+      ),
     );
   }
 
