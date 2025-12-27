@@ -28,5 +28,3 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 
-# iOS
-ios/Runner.xcodeproj/project.pbxproj
