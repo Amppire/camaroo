@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camaroo/utils/theme_constants.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 
 class ZoomSlider extends StatefulWidget {
   final double currentZoom;
@@ -38,16 +39,38 @@ class _ZoomSliderState extends State<ZoomSlider> {
     }
   }
 
-  // Define zoom stops for camera switching
+  // Convert linear slider position (0-1) to logarithmic zoom value
+  double _sliderToZoom(double sliderValue) {
+    final minLog = math.log(widget.minZoom);
+    final maxLog = math.log(widget.maxZoom);
+    final logValue = minLog + (sliderValue * (maxLog - minLog));
+    return math.exp(logValue);
+  }
+
+  // Convert logarithmic zoom value to linear slider position (0-1)
+  double _zoomToSlider(double zoom) {
+    final minLog = math.log(widget.minZoom);
+    final maxLog = math.log(widget.maxZoom);
+    final logZoom = math.log(zoom);
+    return (logZoom - minLog) / (maxLog - minLog);
+  }
+
+  // Define zoom stops for visual markers
   List<double> get _zoomStops {
-    return [0.5, 1.0, 2.0, 5.0];
+    // Common zoom values that should be marked
+    List<double> stops = [0.5, 1.0, 2.0, 5.0, 10.0];
+    // Only include stops within the valid range
+    return stops.where((z) => z >= widget.minZoom && z <= widget.maxZoom).toList();
   }
 
   String _getZoomLabel(double zoom) {
-    if (zoom <= 0.6) return '0.5x';
-    if (zoom <= 1.2) return '1x';
-    if (zoom <= 2.5) return '2x';
-    return '${zoom.toStringAsFixed(1)}x';
+    if (zoom < 1) {
+      return '${zoom.toStringAsFixed(1)}x';
+    } else if (zoom < 10) {
+      return '${zoom.toStringAsFixed(1)}x';
+    } else {
+      return '${zoom.toStringAsFixed(0)}x';
+    }
   }
 
   @override
@@ -86,7 +109,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
           ),
           const SizedBox(height: 12),
           
-          // Zoom slider
+          // Zoom slider with logarithmic scaling
           SizedBox(
             height: 32,
             child: Stack(
@@ -99,11 +122,12 @@ class _ZoomSliderState extends State<ZoomSlider> {
                       minZoom: widget.minZoom,
                       maxZoom: widget.maxZoom,
                       zoomStops: _zoomStops,
+                      zoomToSlider: _zoomToSlider,
                     ),
                   ),
                 ),
                 
-                // Slider
+                // Slider (0-1 linear, but represents logarithmic zoom)
                 SliderTheme(
                   data: SliderThemeData(
                     trackHeight: 2,
@@ -118,17 +142,18 @@ class _ZoomSliderState extends State<ZoomSlider> {
                     overlayColor: ThemeConstants.textAndIconColor.withOpacity(0.2),
                   ),
                   child: Slider(
-                    value: _localZoom.clamp(widget.minZoom, widget.maxZoom),
-                    min: widget.minZoom,
-                    max: widget.maxZoom,
-                    onChanged: (value) {
+                    value: _zoomToSlider(_localZoom.clamp(widget.minZoom, widget.maxZoom)),
+                    min: 0.0,
+                    max: 1.0,
+                    onChanged: (sliderValue) {
+                      final zoomValue = _sliderToZoom(sliderValue);
                       setState(() {
-                        _localZoom = value;
+                        _localZoom = zoomValue;
                         _isDragging = true;
                       });
-                      widget.onZoomChanged(value);
+                      widget.onZoomChanged(zoomValue);
                     },
-                    onChangeEnd: (value) {
+                    onChangeEnd: (sliderValue) {
                       setState(() {
                         _isDragging = false;
                       });
@@ -148,33 +173,33 @@ class _ZoomTrackPainter extends CustomPainter {
   final double minZoom;
   final double maxZoom;
   final List<double> zoomStops;
+  final double Function(double) zoomToSlider;
 
   _ZoomTrackPainter({
     required this.minZoom,
     required this.maxZoom,
     required this.zoomStops,
+    required this.zoomToSlider,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = ThemeConstants.textAndIconColor.withValues(alpha: 0.4)
+      ..color = ThemeConstants.textAndIconColor.withOpacity(0.4)
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
 
-    // Draw markers for zoom stops
+    // Draw markers for zoom stops (using logarithmic positions)
     for (final stop in zoomStops) {
-      if (stop >= minZoom && stop <= maxZoom) {
-        final position = (stop - minZoom) / (maxZoom - minZoom);
-        final x = position * size.width;
-        
-        // Draw vertical line
-        canvas.drawLine(
-          Offset(x, size.height / 2 - 6),
-          Offset(x, size.height / 2 + 6),
-          paint,
-        );
-      }
+      final position = zoomToSlider(stop);
+      final x = position * size.width;
+      
+      // Draw vertical line
+      canvas.drawLine(
+        Offset(x, size.height / 2 - 6),
+        Offset(x, size.height / 2 + 6),
+        paint,
+      );
     }
   }
 
