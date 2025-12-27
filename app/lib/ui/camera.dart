@@ -35,10 +35,15 @@ class _CameraState extends State<Camera> {
   void dispose() {
     // Restore status bar
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     // Clean up controller
-    if (widget.cameraApi is CameraApiModel) {
-      (widget.cameraApi as CameraApiModel).dispose();
-    }
+    widget.cameraAdapter.cameraControllerNotifier.value?.dispose();
+    widget.cameraAdapter.currentCameraNotifier.value = null;
+    widget.cameraAdapter.camerasNotifier.value = [];
+    widget.cameraAdapter.statusNotifier.value = CameraStatus.uninitialized;
+    widget.cameraAdapter.errorMessageNotifier.value = null;
+    widget.cameraAdapter.pictureTakenNotifier.value = null;
+    widget.cameraAdapter.flashModeNotifier.value = FlashMode.off;
     super.dispose();
   }
 
