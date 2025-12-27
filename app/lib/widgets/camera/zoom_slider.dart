@@ -3,13 +3,14 @@ import 'package:camaroo/utils/theme_constants.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 
-class ZoomSlider extends StatefulWidget {
+class ZoomSlider extends StatelessWidget {
+
   final double currentZoom;
   final double minZoom;
   final double maxZoom;
   final Function(double) onZoomChanged;
 
-  const ZoomSlider({
+  ZoomSlider({
     super.key,
     required this.currentZoom,
     required this.minZoom,
@@ -17,40 +18,24 @@ class ZoomSlider extends StatefulWidget {
     required this.onZoomChanged,
   });
 
-  @override
-  State<ZoomSlider> createState() => _ZoomSliderState();
-}
 
-class _ZoomSliderState extends State<ZoomSlider> {
-  late final ValueNotifier<double> _localZoomNotifier = ValueNotifier(widget.currentZoom);
+  late final ValueNotifier<double> _localZoomNotifier = ValueNotifier(currentZoom);
   final ValueNotifier<bool> _isDraggingNotifier = ValueNotifier(false);
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
-  @override
-  void didUpdateWidget(ZoomSlider oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!_isDraggingNotifier.value &&
-        widget.currentZoom != _localZoomNotifier.value) {
-      _localZoomNotifier.value = widget.currentZoom;
-    }
-  }
 
   // Convert linear slider position (0-1) to logarithmic zoom value
   double _sliderToZoom(double sliderValue) {
-    final minLog = math.log(widget.minZoom);
-    final maxLog = math.log(widget.maxZoom);
+    final minLog = math.log(minZoom);
+    final maxLog = math.log(maxZoom);
     final logValue = minLog + (sliderValue * (maxLog - minLog));
     return math.exp(logValue);
   }
 
   // Convert logarithmic zoom value to linear slider position (0-1)
   double _zoomToSlider(double zoom) {
-    final minLog = math.log(widget.minZoom);
-    final maxLog = math.log(widget.maxZoom);
+    final minLog = math.log(minZoom);
+    final maxLog = math.log(maxZoom);
     final logZoom = math.log(zoom);
     return (logZoom - minLog) / (maxLog - minLog);
   }
@@ -61,7 +46,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
     List<double> stops = [0.5, 1.0, 2.0, 5.0, 10.0];
     // Only include stops within the valid range
     return stops
-        .where((z) => z >= widget.minZoom && z <= widget.maxZoom)
+        .where((z) => z >= minZoom && z <= maxZoom)
         .toList();
   }
 
@@ -124,8 +109,8 @@ class _ZoomSliderState extends State<ZoomSlider> {
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _ZoomTrackPainter(
-                      minZoom: widget.minZoom,
-                      maxZoom: widget.maxZoom,
+                      minZoom: minZoom,
+                      maxZoom: maxZoom,
                       zoomStops: _zoomStops,
                       zoomToSlider: _zoomToSlider,
                     ),
@@ -145,11 +130,9 @@ class _ZoomSliderState extends State<ZoomSlider> {
                     ),
                     activeTrackColor: ThemeConstants.textAndIconColor,
                     inactiveTrackColor: ThemeConstants.textAndIconColor
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                     thumbColor: ThemeConstants.textAndIconColor,
-                    overlayColor: ThemeConstants.textAndIconColor.withOpacity(
-                      0.2,
-                    ),
+                    overlayColor: ThemeConstants.textAndIconColor.withValues(alpha: 0.2)
                   ),
                   child: ValueListenableBuilder(
                     valueListenable: _localZoomNotifier,
@@ -158,7 +141,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
                           valueListenable: _isDraggingNotifier,
                           builder: (context, bool isDragging, _) => Slider(
                             value: _zoomToSlider(
-                              localZoom.clamp(widget.minZoom, widget.maxZoom),
+                              localZoom.clamp(minZoom, maxZoom),
                             ),
                             min: 0.0,
                             max: 1.0,
@@ -166,7 +149,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
                               final zoomValue = _sliderToZoom(sliderValue);
                               _localZoomNotifier.value = zoomValue;
                               _isDraggingNotifier.value = true;
-                              widget.onZoomChanged(zoomValue);
+                              onZoomChanged(zoomValue);
                             },
                             onChangeEnd: (sliderValue) {
                               _isDraggingNotifier.value = false;
@@ -200,7 +183,7 @@ class _ZoomTrackPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = ThemeConstants.textAndIconColor.withOpacity(0.4)
+      ..color = ThemeConstants.textAndIconColor.withValues(alpha: 0.4)
       ..strokeWidth = 1.5
       ..strokeCap = StrokeCap.round;
 
