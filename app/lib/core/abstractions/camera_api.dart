@@ -36,6 +36,12 @@ abstract class CameraApi {
   Function(double?) onZoomLevelChanged = (zoomLevel) {};
   void setZoomLevel(double? newZoomLevel);
 
+  // Min/Max Zoom Levels
+  double? get minZoomLevel;
+  double? get maxZoomLevel;
+  Function(double, double) onZoomRangeChanged = (min, max) {};
+  void setZoomRange(double min, double max);
+
   // Error Message
   // TODO: Doc.
   String? get errorMessage;
@@ -70,4 +76,9 @@ abstract class CameraApi {
   /// Will return error if the flash mode is not available.
   ///
   void toggleFlash();
+
+  /// Sets the zoom level.
+  /// Will return error if the zoom level is not available.
+  ///
+  void setZoom(double zoom);
 }

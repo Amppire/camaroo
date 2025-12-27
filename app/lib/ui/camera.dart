@@ -5,6 +5,7 @@ import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
 import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
 import 'package:camaroo/widgets/camera/flip_button.dart';
+import 'package:camaroo/widgets/camera/zoom_slider.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
@@ -119,49 +120,81 @@ class _CameraState extends State<Camera> {
     );
   }
 
-  Widget _buildBottomControls(CameraStatus status) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Gallery thumbnail
-            ValueListenableBuilder<XFile?>(
-              valueListenable: widget.cameraAdapter.pictureTakenNotifier,
-              builder: (context, picture, _) {
-                return GalleryThumbnail(picture: picture);
-              },
-            ),
 
-            // Capture button
-            CaptureButton(status: status, onPressed: () => widget.cameraApi.takePicture()),
-
-            // Camera flip button
-            ValueListenableBuilder<List<CameraDescription>>(
-              valueListenable: widget.cameraAdapter.camerasNotifier,
-              builder: (context, cameras, _) {
-                if (cameras.length <= 1) {
-                  return const SizedBox(width: 56); // Spacer for symmetry
+// Update the _buildBottomControls method:
+Widget _buildBottomControls(CameraStatus status) {
+  return SafeArea(
+    top: false,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Zoom slider (above capture button)
+        ValueListenableBuilder<double?>(
+          valueListenable: widget.cameraAdapter.zoomLevelNotifier,
+          builder: (context, zoomLevel, _) {
+            return ValueListenableBuilder<CameraController?>(
+              valueListenable: widget.cameraAdapter.cameraControllerNotifier,
+              builder: (context, controller, _) {
+                if (controller == null || !controller.value.isInitialized) {
+                  return const SizedBox.shrink();
                 }
-                return ValueListenableBuilder<CameraDescription?>(
-                  valueListenable: widget.cameraAdapter.currentCameraNotifier,
-                  builder: (context, currentCamera, _) {
-                    if (currentCamera == null) {
-                      return const SizedBox(width: 56);
-                    }
-                    return FlipButton(cameraApi: widget.cameraApi, currentCamera: currentCamera);
+                
+                return ZoomSlider(
+                  currentZoom: zoomLevel ?? 1.0,
+                  minZoom: widget.cameraAdapter.minZoomLevelNotifier.value ?? 0.5,
+                  maxZoom: widget.cameraAdapter.maxZoomLevelNotifier.value ?? 5.0,
+                  onZoomChanged: (zoom) async {
+                    widget.cameraApi.setZoom(zoom);
                   },
                 );
               },
-            ),
-          ],
+            );
+          },
         ),
-      ),
-    );
-  }
+        
+        // Existing controls row
+        Container(
+          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Gallery thumbnail
+              ValueListenableBuilder<XFile?>(
+                valueListenable: widget.cameraAdapter.pictureTakenNotifier,
+                builder: (context, picture, _) {
+                  return GalleryThumbnail(picture: picture);
+                },
+              ),
+
+              // Capture button
+              CaptureButton(status: status, onPressed: () => widget.cameraApi.takePicture()),
+
+              // Camera flip button
+              ValueListenableBuilder<List<CameraDescription>>(
+                valueListenable: widget.cameraAdapter.camerasNotifier,
+                builder: (context, cameras, _) {
+                  if (cameras.length <= 1) {
+                    return const SizedBox(width: 56);
+                  }
+                  return ValueListenableBuilder<CameraDescription?>(
+                    valueListenable: widget.cameraAdapter.currentCameraNotifier,
+                    builder: (context, currentCamera, _) {
+                      if (currentCamera == null) {
+                        return const SizedBox(width: 56);
+                      }
+                      return FlipButton(cameraApi: widget.cameraApi, currentCamera: currentCamera);
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildErrorMessage() {
     return ValueListenableBuilder<String?>(
@@ -202,6 +235,7 @@ class _CameraState extends State<Camera> {
       },
     );
   }
+  
 
   IconData _getFlashIcon(FlashMode? mode) {
     switch (mode) {

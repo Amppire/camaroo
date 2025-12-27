@@ -15,6 +15,8 @@ class CameraApiModel implements CameraApi {
   List<CameraDescription> _cameras = [];
   CameraDescription? _currentCamera;
   double? _zoomLevel;
+  double? _minZoomLevel;
+  double? _maxZoomLevel;
   String? _errorMessage;
   FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
@@ -99,6 +101,21 @@ class CameraApiModel implements CameraApi {
     onZoomLevelChanged(newZoomLevel);
   }
 
+
+  // Min/Max Zoom Levels
+  @override
+  double? get minZoomLevel => _minZoomLevel;
+  @override
+  double? get maxZoomLevel => _maxZoomLevel;
+  @override
+  Function(double, double) onZoomRangeChanged = (min, max) {};
+  @override
+  void setZoomRange(double min, double max) {
+    _minZoomLevel = min;
+    _maxZoomLevel = max;
+    onZoomRangeChanged(min, max);
+  }
+
   // Error Message
   @override
   String? get errorMessage => _errorMessage;
@@ -128,103 +145,108 @@ class CameraApiModel implements CameraApi {
   // PUBLIC METHODS
   // ============================================================================
 
-  @override
-  Future<void> initializeCamera() async {
-    // Validation: Don't re-initialize if already initializing
-    if (status == CameraStatus.initializing) {
+@override
+Future<void> initializeCamera() async {
+  // Validation: Don't re-initialize if already initializing
+  if (status == CameraStatus.initializing) {
+    return;
+  }
+
+  // Update state
+  setStatus(CameraStatus.initializing);
+  setErrorMessage(null);
+
+  try {
+    // Get available cameras if not already loaded
+    if (_cameras.isEmpty) {
+      _cameras = await availableCameras();
+      _cameras.sort(
+        (a, b) => a.lensDirection.name.compareTo(b.lensDirection.name),
+      );
+      onCamerasChanged(_cameras);
+      _currentCamera = _cameras.first;
+      onCurrentCameraChanged(_currentCamera);
+    }
+
+    // Business rule: Must have at least one camera
+    if (_cameras.isEmpty) {
+      setErrorMessage(AppConstants.noCamerasFound);
+      setStatus(CameraStatus.error);
       return;
     }
+
+    // Dispose old controller if exists
+    await _cameraController?.dispose();
+
+    // Create new controller with current camera
+    final camera = _currentCamera;
+    if (camera == null) {
+      setErrorMessage(AppConstants.noCameraSelected);
+      setStatus(CameraStatus.error);
+      return;
+    }
+
+    final controller = CameraController(
+      camera,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    // Initialize the controller
+    await controller.initialize();
+
+    // Lock capture orientation to portrait
+    await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
+
+    // Set flash mode
+    await controller.setFlashMode(_flashMode ?? FlashMode.off);
+
+    // ⭐ FETCH AND SET ZOOM RANGE (THIS IS THE FIX!)
+    final minZoom = await controller.getMinZoomLevel();
+    final maxZoom = await controller.getMaxZoomLevel();
+    setZoomRange(minZoom, maxZoom);
+    setZoomLevel(1.0); // Set initial zoom to 1x
 
     // Update state
-    setStatus(CameraStatus.initializing);
-    setErrorMessage(null);
-
-    try {
-      // Get available cameras if not already loaded
-      if (_cameras.isEmpty) {
-        _cameras = await availableCameras();
-        _cameras.sort(
-          (a, b) => a.lensDirection.name.compareTo(b.lensDirection.name),
-        );
-        onCamerasChanged(_cameras);
-        _currentCamera = _cameras.first;
-        onCurrentCameraChanged(_currentCamera);
-      }
-
-      // Business rule: Must have at least one camera
-      if (_cameras.isEmpty) {
-        setErrorMessage(AppConstants.noCamerasFound);
-        setStatus(CameraStatus.error);
-        return;
-      }
-
-      // Dispose old controller if exists
-      await _cameraController?.dispose();
-
-      // Create new controller with current camera
-      final camera = _currentCamera;
-      if (camera == null) {
-        setErrorMessage(AppConstants.noCameraSelected);
-        setStatus(CameraStatus.error);
-        return;
-      }
-
-      final controller = CameraController(
-        camera,
-        ResolutionPreset.high,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
-
-      // Initialize the controller
-      await controller.initialize();
-
-      // Lock capture orientation to portrait
-      // Avoids weird behavior where the camera sensor rotates with the device.
-      await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
-
-      // Set flash mode
-      await controller.setFlashMode(_flashMode ?? FlashMode.off);
-
-      // Update state
-      setCameraController(controller);
-      setStatus(CameraStatus.ready);
-    } on CameraException catch (e) {
-      setErrorMessage('${AppConstants.cameraNotReady} ${e.description}');
-      setStatus(CameraStatus.error);
-    } catch (e) {
-      setErrorMessage('${AppConstants.unexpectedError} $e');
-      setStatus(CameraStatus.error);
-    }
+    setCameraController(controller);
+    setStatus(CameraStatus.ready);
+  } on CameraException catch (e) {
+    setErrorMessage('${AppConstants.cameraNotReady} ${e.description}');
+    setStatus(CameraStatus.error);
+  } catch (e) {
+    setErrorMessage('${AppConstants.unexpectedError} $e');
+    setStatus(CameraStatus.error);
   }
+}
 
   @override
-  Future<void> switchCamera() async {
-    // Business rule: Can't switch if only one camera
-    if (cameras.length <= 1) {
-      setErrorMessage(AppConstants.onlyOneCameraAvailable);
-      return;
-    }
-
-    // Business rule: Can't switch while taking picture
-    if (status == CameraStatus.takingPicture) {
-      setErrorMessage(AppConstants.cannotSwitchWhileTakingPicture);
-      return;
-    }
-
-    // Switch between front camera and main rear camera
-    for (final camera in cameras) {
-      final currentCamera = _currentCamera!;
-      if (camera != _currentCamera &&
-          camera.lensDirection != currentCamera.lensDirection) {
-        setCurrentCamera(camera);
-        break;
-      }
-    }
-
-    // Re-initialize with new camera
-    await initializeCamera();
+Future<void> switchCamera() async {
+  // Business rule: Can't switch if only one camera
+  if (cameras.length <= 1) {
+    setErrorMessage(AppConstants.onlyOneCameraAvailable);
+    return;
   }
+
+  // Business rule: Can't switch while taking picture
+  if (status == CameraStatus.takingPicture) {
+    setErrorMessage(AppConstants.cannotSwitchWhileTakingPicture);
+    return;
+  }
+
+  // Switch between front camera and main rear camera
+  for (final camera in cameras) {
+    final currentCamera = _currentCamera!;
+    if (camera != _currentCamera &&
+        camera.lensDirection != currentCamera.lensDirection) {
+      setCurrentCamera(camera);
+      break;
+    }
+  }
+
+  // Re-initialize with new camera (this will also update zoom range)
+  await initializeCamera();
+}
 
   @override
   Future<void> takePicture() async {
@@ -282,6 +304,33 @@ class CameraApiModel implements CameraApi {
 
     setFlashMode(newMode);
   }
+
+  // Add this method to CameraApiModel class
+
+/// Set zoom level
+@override
+Future<void> setZoom(double zoom) async {
+  if (_cameraController == null || !_cameraController!.value.isInitialized) {
+    return;
+  }
+
+  try {
+    final minZoom = minZoomLevel;
+    final maxZoom = maxZoomLevel;
+    if (minZoom == null || maxZoom == null) {
+      return;
+    }
+    final clampedZoom = zoom.clamp(
+      minZoom,
+      maxZoom,
+    );
+    
+    await _cameraController!.setZoomLevel(clampedZoom.toDouble());
+    setZoomLevel(clampedZoom);
+  } catch (e) {
+    print('Error setting zoom: $e');
+  }
+}
 
   // ============================================================================
   // PRIVATE HELPERS

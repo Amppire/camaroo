@@ -25,6 +25,13 @@ class CameraAdapter {
     zoomLevelNotifier = ValueNotifier(cameraApi.zoomLevel);
     cameraApi.onZoomLevelChanged = (zoomLevel) => zoomLevelNotifier.value = zoomLevel;
 
+        minZoomLevelNotifier = ValueNotifier(cameraApi.minZoomLevel);
+    maxZoomLevelNotifier = ValueNotifier(cameraApi.maxZoomLevel);
+    cameraApi.onZoomRangeChanged = (min, max) {
+      minZoomLevelNotifier.value = min;
+      maxZoomLevelNotifier.value = max;
+    };
+
     errorMessageNotifier = ValueNotifier(cameraApi.errorMessage);
     cameraApi.onErrorMessageChanged = (errorMessage) =>
         errorMessageNotifier.value = errorMessage;
@@ -40,6 +47,8 @@ class CameraAdapter {
   late final ValueNotifier<CameraDescription?> currentCameraNotifier;
   late final ValueNotifier<FlashMode?> flashModeNotifier;
   late final ValueNotifier<double?> zoomLevelNotifier;
+  late final ValueNotifier<double?> minZoomLevelNotifier;
+  late final ValueNotifier<double?> maxZoomLevelNotifier;
   late final ValueNotifier<String?> errorMessageNotifier;
   late final ValueNotifier<XFile?> pictureTakenNotifier;
 }

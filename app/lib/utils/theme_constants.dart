@@ -16,6 +16,9 @@ class ThemeConstants {
   
   // Accent color - Vibrant red/orange for capture button and important actions
   static const Color accentColor = Color(0xFFEF4444);
+
+  static const Color glassBackgroundColor = Color(0xFF1E1E1E);
+  static const Color glassBorderColor = Color(0xFF333333);
   
   // Additional useful colors for camera apps
   static const Color surfaceColor = Color(0xFF1E1E1E);
