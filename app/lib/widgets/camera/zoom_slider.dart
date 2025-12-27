@@ -22,20 +22,20 @@ class ZoomSlider extends StatefulWidget {
 }
 
 class _ZoomSliderState extends State<ZoomSlider> {
-  late double _localZoom;
-  bool _isDragging = false;
+  late final ValueNotifier<double> _localZoomNotifier = ValueNotifier(widget.currentZoom);
+  final ValueNotifier<bool> _isDraggingNotifier = ValueNotifier(false);
 
   @override
   void initState() {
     super.initState();
-    _localZoom = widget.currentZoom;
   }
 
   @override
   void didUpdateWidget(ZoomSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_isDragging && widget.currentZoom != _localZoom) {
-      _localZoom = widget.currentZoom;
+    if (!_isDraggingNotifier.value &&
+        widget.currentZoom != _localZoomNotifier.value) {
+      _localZoomNotifier.value = widget.currentZoom;
     }
   }
 
@@ -60,7 +60,9 @@ class _ZoomSliderState extends State<ZoomSlider> {
     // Common zoom values that should be marked
     List<double> stops = [0.5, 1.0, 2.0, 5.0, 10.0];
     // Only include stops within the valid range
-    return stops.where((z) => z >= widget.minZoom && z <= widget.maxZoom).toList();
+    return stops
+        .where((z) => z >= widget.minZoom && z <= widget.maxZoom)
+        .toList();
   }
 
   String _getZoomLabel(double zoom) {
@@ -87,7 +89,10 @@ class _ZoomSliderState extends State<ZoomSlider> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: ThemeConstants.glassBackgroundColor,
                   borderRadius: BorderRadius.circular(16),
@@ -97,7 +102,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
                   ),
                 ),
                 child: Text(
-                  _getZoomLabel(_localZoom),
+                  _getZoomLabel(_localZoomNotifier.value),
                   style: const TextStyle(
                     color: ThemeConstants.textAndIconColor,
                     fontSize: 14,
@@ -108,7 +113,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Zoom slider with logarithmic scaling
           SizedBox(
             height: 32,
@@ -126,7 +131,7 @@ class _ZoomSliderState extends State<ZoomSlider> {
                     ),
                   ),
                 ),
-                
+
                 // Slider (0-1 linear, but represents logarithmic zoom)
                 SliderTheme(
                   data: SliderThemeData(
@@ -135,29 +140,39 @@ class _ZoomSliderState extends State<ZoomSlider> {
                       enabledThumbRadius: 12,
                       elevation: 4,
                     ),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 20,
+                    ),
                     activeTrackColor: ThemeConstants.textAndIconColor,
-                    inactiveTrackColor: ThemeConstants.textAndIconColor.withOpacity(0.3),
+                    inactiveTrackColor: ThemeConstants.textAndIconColor
+                        .withOpacity(0.3),
                     thumbColor: ThemeConstants.textAndIconColor,
-                    overlayColor: ThemeConstants.textAndIconColor.withOpacity(0.2),
+                    overlayColor: ThemeConstants.textAndIconColor.withOpacity(
+                      0.2,
+                    ),
                   ),
-                  child: Slider(
-                    value: _zoomToSlider(_localZoom.clamp(widget.minZoom, widget.maxZoom)),
-                    min: 0.0,
-                    max: 1.0,
-                    onChanged: (sliderValue) {
-                      final zoomValue = _sliderToZoom(sliderValue);
-                      setState(() {
-                        _localZoom = zoomValue;
-                        _isDragging = true;
-                      });
-                      widget.onZoomChanged(zoomValue);
-                    },
-                    onChangeEnd: (sliderValue) {
-                      setState(() {
-                        _isDragging = false;
-                      });
-                    },
+                  child: ValueListenableBuilder(
+                    valueListenable: _localZoomNotifier,
+                    builder: (context, double localZoom, _) =>
+                        ValueListenableBuilder(
+                          valueListenable: _isDraggingNotifier,
+                          builder: (context, bool isDragging, _) => Slider(
+                            value: _zoomToSlider(
+                              localZoom.clamp(widget.minZoom, widget.maxZoom),
+                            ),
+                            min: 0.0,
+                            max: 1.0,
+                            onChanged: (sliderValue) {
+                              final zoomValue = _sliderToZoom(sliderValue);
+                              _localZoomNotifier.value = zoomValue;
+                              _isDraggingNotifier.value = true;
+                              widget.onZoomChanged(zoomValue);
+                            },
+                            onChangeEnd: (sliderValue) {
+                              _isDraggingNotifier.value = false;
+                            },
+                          ),
+                        ),
                   ),
                 ),
               ],
@@ -193,7 +208,7 @@ class _ZoomTrackPainter extends CustomPainter {
     for (final stop in zoomStops) {
       final position = zoomToSlider(stop);
       final x = position * size.width;
-      
+
       // Draw vertical line
       canvas.drawLine(
         Offset(x, size.height / 2 - 6),
