@@ -87,8 +87,10 @@ class ZoomSlider extends StatelessWidget {
                     width: 1,
                   ),
                 ),
-                child: Text(
-                  _getZoomLabel(_localZoomNotifier.value),
+                child: ValueListenableBuilder(
+                  valueListenable: _localZoomNotifier,
+                  builder: (context, double localZoom, _) => Text(
+                  _getZoomLabel(localZoom),
                   style: const TextStyle(
                     color: ThemeConstants.textAndIconColor,
                     fontSize: 14,
@@ -96,12 +98,18 @@ class ZoomSlider extends StatelessWidget {
                   ),
                 ),
               ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
 
           // Zoom slider with logarithmic scaling
-          SizedBox(
+            ValueListenableBuilder(
+                    valueListenable: _localZoomNotifier,
+                    builder: (context, double localZoom, _) =>
+                        ValueListenableBuilder(
+                          valueListenable: _isDraggingNotifier,
+                          builder: (context, bool isDragging, _) =>SizedBox(
             height: 32,
             child: Stack(
               alignment: Alignment.center,
@@ -135,12 +143,7 @@ class ZoomSlider extends StatelessWidget {
                     thumbColor: ThemeConstants.textAndIconColor,
                     overlayColor: ThemeConstants.textAndIconColor.withValues(alpha: 0.2)
                   ),
-                  child: ValueListenableBuilder(
-                    valueListenable: _localZoomNotifier,
-                    builder: (context, double localZoom, _) =>
-                        ValueListenableBuilder(
-                          valueListenable: _isDraggingNotifier,
-                          builder: (context, bool isDragging, _) => Slider(
+               child: Slider(
                             value: _zoomToSlider(
                               localZoom.clamp(minZoom, maxZoom),
                             ),
@@ -157,14 +160,14 @@ class ZoomSlider extends StatelessWidget {
                             },
                           ),
                         ),
-                  ),
+                  ]),
+                ),),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
+        
+    
   }
 }
 
