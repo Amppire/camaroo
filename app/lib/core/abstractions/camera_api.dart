@@ -31,6 +31,11 @@ abstract class CameraApi {
   Function(FlashMode?) onFlashModeChanged = (flashMode) {};
   void setFlashMode(FlashMode? newFlashMode);
 
+  // Zoom Level
+  double? get zoomLevel;
+  Function(double?) onZoomLevelChanged = (zoomLevel) {};
+  void setZoomLevel(double? newZoomLevel);
+
   // Error Message
   // TODO: Doc.
   String? get errorMessage;

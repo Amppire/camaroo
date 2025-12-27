@@ -14,6 +14,7 @@ class CameraApiModel implements CameraApi {
   CameraController? _cameraController;
   List<CameraDescription> _cameras = [];
   CameraDescription? _currentCamera;
+  double? _zoomLevel;
   String? _errorMessage;
   FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
@@ -83,6 +84,19 @@ class CameraApiModel implements CameraApi {
     onFlashModeChanged(newFlashMode);
     // Apply flash mode to controller
     _applyFlashMode();
+  }
+
+  // Zoom Level
+  @override
+  double? get zoomLevel => _zoomLevel;
+
+  @override
+  Function(double?) onZoomLevelChanged = (zoomLevel) {};
+
+  @override
+  void setZoomLevel(double? newZoomLevel) {
+    _zoomLevel = newZoomLevel;
+    onZoomLevelChanged(newZoomLevel);
   }
 
   // Error Message
