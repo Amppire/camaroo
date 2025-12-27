@@ -7,7 +7,7 @@ import 'package:camaroo/widgets/camera/flip_button.dart';
 import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camaroo/core/models/camera_model.dart';
+import 'package:camaroo/core/services/camera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -31,6 +31,7 @@ class _CameraState extends State<Camera> {
 
     // Hide status bar for full-screen immersion
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
 
     widget.cameraApi.initializeCamera();
   }
@@ -63,7 +64,15 @@ class _CameraState extends State<Camera> {
                 status: status,
               ),
 
+              Viewfinder(
+                cameraApi: widget.cameraApi,
+                cameraAdapter: widget.cameraAdapter,
+                status: status,
+              ),
+
               // Top controls overlay
+              Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
+
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
               // Bottom controls overlay
@@ -112,16 +121,14 @@ class _CameraState extends State<Camera> {
               },
             ),
 
+
             // Close button (optional)
             GlassButton(
               onPressed: () {
+              onPressed: () {
                 // TODO: Implement settings pop-up.
               },
-              child: const Icon(
-                Icons.menu_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
             ),
           ],
         ),
@@ -150,6 +157,7 @@ class _CameraState extends State<Camera> {
                 return GalleryThumbnail(picture: picture);
               },
             ),
+
 
             // Capture button
             CaptureButton(
@@ -190,6 +198,7 @@ class _CameraState extends State<Camera> {
       builder: (context, error, _) {
         if (error == null) return const SizedBox.shrink();
 
+
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: BackdropFilter(
@@ -199,18 +208,11 @@ class _CameraState extends State<Camera> {
               decoration: BoxDecoration(
                 color: Colors.red.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.red.withOpacity(0.3),
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -246,3 +248,4 @@ class _CameraState extends State<Camera> {
     }
   }
 }
+
