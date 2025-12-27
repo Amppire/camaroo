@@ -124,6 +124,9 @@ class CameraApiModel implements CameraApi {
       // Get available cameras if not already loaded
       if (_cameras.isEmpty) {
         _cameras = await availableCameras();
+        _cameras.sort(
+          (a, b) => b.lensDirection.name.compareTo(a.lensDirection.name),
+        );
         onCamerasChanged(_cameras);
         _currentCamera = _cameras.first;
         onCurrentCameraChanged(_currentCamera);
