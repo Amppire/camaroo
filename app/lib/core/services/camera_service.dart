@@ -24,6 +24,15 @@ class CameraApiModel implements CameraApi {
   
   CameraInfo _cameraInfo = CameraInfo.instance;
 
+    // Store camera hardware properties
+  final Map<String, CameraProperties> _cameraProperties = {};
+  
+  // Store base zoom for each camera (calculated from focal length)
+  final Map<String, double> _cameraBaseZooms = {};
+  
+  // Store zoom stops (camera switch points)
+  final List<double> _zoomStops = [1.0];
+
   @override
   CameraStatus get status => _cameraStatus;
 
@@ -173,7 +182,6 @@ Future<void> initializeCamera() async {
 
       await _getAllCameraZoomRanges();
 
-        await _testCameraInfo();  // Temporary test
 
 
     // Business rule: Must have at least one camera
@@ -360,49 +368,73 @@ Future<void> _getAllCameraZoomRanges() async {
   }
 }
 
-/// Test camera_info package (temporary for debugging)
-Future<void> _testCameraInfo() async {
-  print('\n🧪 Testing camera_info package...\n');
-  
-  try {
-    // Test 1: Get all properties
-    final allProps = await CameraInfo.instance.getAllCameraProperties();
-    print('Found ${allProps.length} cameras with properties');
-    
-    // Test 2: Get specific camera
-    if (cameras.isNotEmpty) {
-      
-      final firstCamera = cameras[2];
-      final props = await CameraInfo.instance.getCameraProperties(firstCamera.name);
-      print('\nFirst camera (${firstCamera.name}):');
-      print('  Focal Length: ${props.focalLength}');
-      print('  FOV: ${props.fieldOfView}');
-      print('  Sensor Size: ${props.sensorSize}');
-    }
-    
-    // Test 3: Calculate base zoom
-    final backCameras = cameras.where((c) => 
-      c.lensDirection == CameraLensDirection.back
-    ).toList();
-    
-    if (backCameras.length >= 2) {
-      final cam1 = allProps[backCameras[0].name];
-      final cam2 = allProps[backCameras[1].name];
-      
-      if (cam1?.fieldOfView != null && cam2?.fieldOfView != null) {
-        final relativeZoom = cam1!.fieldOfView! / cam2!.fieldOfView!;
-        print('\nRelative zoom between cameras:');
-        print('  ${backCameras[0].name}: 1.0x (reference)');
-        print('  ${backCameras[1].name}: ${relativeZoom.toStringAsFixed(2)}x');
+Future<void> _loadCameraProperties() async{
+  final allProps = await CameraInfo.instance.getAllCameraProperties();
+
+  for (final camera in cameras) {
+    var props = allProps[camera.name];
+
+        if (props != null) {
+        _cameraProperties[camera.name] = props;
       }
-    }
-    
-    print('\n✅ camera_info package test complete!\n');
-  } catch (e, stack) {
-    print('❌ Error testing camera_info: $e');
-    print('Stack trace: $stack');
+
+        // If no exact match, try fuzzy matching
+      props ??= allProps.values.firstWhere(
+          (p) => p.cameraId.contains(camera.name.split(':').last) ||
+                 camera.name.contains(p.cameraId.split(':').last),
+          orElse: () => allProps.values.first,
+        );
+
   }
 }
+
+
+
+// /// Test camera_info package (temporary for debugging)
+// Future<void> _testCameraInfo() async {
+//   print('\n🧪 Testing camera_info package...\n');
+  
+//   try {
+//     // Test 1: Get all properties
+//     final allProps = await CameraInfo.instance.getAllCameraProperties();
+//     print('Found ${allProps.length} cameras with properties');
+    
+//     // Test 2: Get specific camera
+//     if (cameras.isNotEmpty) {
+
+//       for (final camera in cameras) {
+//         final props = await CameraInfo.instance.getCameraProperties(camera.name);
+//         print(props.cameraId);
+//         print('\nCamera (${camera.name}):');
+//         print('  Focal Length: ${props.focalLength}');
+//         print('  FOV: ${props.fieldOfView}');
+//         print('  Sensor Size: ${props.sensorSize}');
+//       }
+//     }
+    
+//     // Test 3: Calculate base zoom
+//     final backCameras = cameras.where((c) => 
+//       c.lensDirection == CameraLensDirection.back
+//     ).toList();
+    
+//     if (backCameras.length >= 2) {
+//       final cam1 = allProps[backCameras[0].name];
+//       final cam2 = allProps[backCameras[1].name];
+      
+//       if (cam1?.fieldOfView != null && cam2?.fieldOfView != null) {
+//         final relativeZoom = cam1!.fieldOfView! / cam2!.fieldOfView!;
+//         print('\nRelative zoom between cameras:');
+//         print('  ${backCameras[0].name}: 1.0x (reference)');
+//         print('  ${backCameras[1].name}: ${relativeZoom.toStringAsFixed(2)}x');
+//       }
+//     }
+    
+//     print('\n✅ camera_info package test complete!\n');
+//   } catch (e, stack) {
+//     print('❌ Error testing camera_info: $e');
+//     print('Stack trace: $stack');
+//   }
+// }
 
   // ============================================================================
   // PRIVATE HELPERS
@@ -419,6 +451,7 @@ Future<void> _testCameraInfo() async {
       }
     }
   }
+  
 
   /// Dispose resources when done
   Future<void> dispose() async {
