@@ -28,16 +28,10 @@ class CameraApiModel implements CameraApi {
   double? _maxFocalLength;
   List<double> _focalLengthStops = [];
   
-  CameraInfo _cameraInfo = CameraInfo.instance;
 
   // Store camera hardware properties
   final Map<String, CameraProperties> _cameraProperties = {};
   
-  // Store base zoom for each camera (calculated from focal length)
-  final Map<String, double> _cameraBaseZooms = {};
-  
-  // Store zoom stops (camera switch points)
-  final List<double> _zoomStops = [1.0];
 
   @override
   CameraStatus get status => _cameraStatus;
@@ -233,8 +227,6 @@ Future<void> initializeCamera() async {
       await _loadCameraProperties();
     }
 
-      await _getAllCameraZoomRanges();
-
 
 
     // Business rule: Must have at least one camera
@@ -325,7 +317,6 @@ Future<void> switchCamera() async {
       break;
     }
   }
-  
 
   // Re-initialize with new camera (this will also update zoom range)
   await initializeCamera();
@@ -521,25 +512,7 @@ Future<void> _updateCameraForFocalLength(double targetFocalLengthMm) async {
   }
 }
 
-Future<void> _getAllCameraZoomRanges() async {
-  for (final camera in cameras) {
-    CameraController tempController = CameraController(
-      camera,
-      ResolutionPreset.max,
-      enableAudio: false,
-    );
-    try {
-      await tempController.initialize();
-      double minZoom = await tempController.getMinZoomLevel();
-      double maxZoom = await tempController.getMaxZoomLevel();
-      print('Camera: ${camera.name}, Min Zoom: $minZoom, Max Zoom: $maxZoom');
-      await tempController.dispose();
-    } catch (e) {
-      print('Failed to get zoom range for camera ${camera.name}: $e');
-      await tempController.dispose();
-    }
-  }
-}
+
 
 
 
@@ -577,7 +550,6 @@ Future<void> _loadCameraProperties() async {
         }
       }
 
-      if (props != null) {
         _cameraProperties[camera.name] = props;
         
         if (kDebugMode) {
@@ -585,7 +557,7 @@ Future<void> _loadCameraProperties() async {
           print('   Focal Length: ${props.focalLength?.toStringAsFixed(2) ?? "N/A"} mm');
           print('   FOV: ${props.fieldOfView?.toStringAsFixed(2) ?? "N/A"}°');
         }
-      }
+      
     }
     
     // Calculate focal length stops and range
@@ -733,54 +705,6 @@ Future<void> _switchToCamera(CameraDescription camera) async {
   }
 }
 
-
-
-// /// Test camera_info package (temporary for debugging)
-// Future<void> _testCameraInfo() async {
-//   print('\n🧪 Testing camera_info package...\n');
-  
-//   try {
-//     // Test 1: Get all properties
-//     final allProps = await CameraInfo.instance.getAllCameraProperties();
-//     print('Found ${allProps.length} cameras with properties');
-    
-//     // Test 2: Get specific camera
-//     if (cameras.isNotEmpty) {
-
-//       for (final camera in cameras) {
-//         final props = await CameraInfo.instance.getCameraProperties(camera.name);
-//         print(props.cameraId);
-//         print('\nCamera (${camera.name}):');
-//         print('  Focal Length: ${props.focalLength}');
-//         print('  FOV: ${props.fieldOfView}');
-//         print('  Sensor Size: ${props.sensorSize}');
-//       }
-//     }
-    
-//     // Test 3: Calculate base zoom
-//     final backCameras = cameras.where((c) => 
-//       c.lensDirection == CameraLensDirection.back
-//     ).toList();
-    
-//     if (backCameras.length >= 2) {
-//       final cam1 = allProps[backCameras[0].name];
-//       final cam2 = allProps[backCameras[1].name];
-      
-//       if (cam1?.fieldOfView != null && cam2?.fieldOfView != null) {
-//         final relativeZoom = cam1!.fieldOfView! / cam2!.fieldOfView!;
-//         print('\nRelative zoom between cameras:');
-//         print('  ${backCameras[0].name}: 1.0x (reference)');
-//         print('  ${backCameras[1].name}: ${relativeZoom.toStringAsFixed(2)}x');
-//       }
-//     }
-    
-//     print('\n✅ camera_info package test complete!\n');
-//   } catch (e, stack) {
-//     print('❌ Error testing camera_info: $e');
-//     print('Stack trace: $stack');
-//   }
-// }
-
   // ============================================================================
   // PRIVATE HELPERS
   // ============================================================================
@@ -890,7 +814,6 @@ CameraDescription? _findBestCameraForEffectiveFocalLength(double targetEffective
   if (currentDirCameras.isEmpty) return _currentCamera;
   
   CameraDescription? bestCamera;
-  double? bestFocalLength;
   double? smallestDifference;
   
   // Find camera with base focal length closest to target (but not over)
@@ -907,7 +830,6 @@ CameraDescription? _findBestCameraForEffectiveFocalLength(double targetEffective
       // Pick camera with smallest difference (closest match)
       if (smallestDifference == null || difference < smallestDifference!) {
         smallestDifference = difference;
-        bestFocalLength = baseFocalLength;
         bestCamera = camera;
       }
     }
