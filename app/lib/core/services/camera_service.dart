@@ -14,6 +14,8 @@ class CameraApiModel implements CameraApi {
   String? _errorMessage;
   FlashMode? _flashMode = FlashMode.off;
 
+  
+
   // Camera Status
   @override
   CameraStatus get status => _cameraStatus;
@@ -74,8 +76,20 @@ class CameraApiModel implements CameraApi {
 
   @override
   Future<void> initializeCamera() async {
+    setStatus(CameraStatus.initializing);
+    setErrorMessage(null);
+
     try {
-      await _cameraController?.initializeDefault();
+      // Create controller if it doesn't exist
+      if (_cameraController == null) {
+        _cameraController = NativeCameraController();
+        setCameraNativeController(_cameraController);
+      }
+
+      // Initialize with default (back camera)
+      await _cameraController!.initializeDefault();
+      print('Camera initialized');
+      setStatus(CameraStatus.ready);
     } catch (e) {
       print('Error initializing camera: $e');
       setErrorMessage('${AppConstants.unexpectedError} $e');

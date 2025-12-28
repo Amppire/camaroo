@@ -79,19 +79,9 @@ class Viewfinder extends StatelessWidget {
         //   );
         // }
 
-        // Full-screen camera preview
-        final size = MediaQuery.of(context).size;
-        return SizedBox.expand(
-          child: FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: size.width,
-              height: size.height,
-              child: cameraApi.cameraNativeController != null ? NativeCameraPreview(controller: cameraApi.cameraNativeController!) : const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-            ),
-          ),
+        // Full-screen camera preview - centered with correct aspect ratio
+        return Center(
+          child: NativeCameraPreview(controller: cameraApi.cameraNativeController!),
         );
-      
-    
   }
 }
