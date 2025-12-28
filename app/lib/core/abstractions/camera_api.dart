@@ -1,35 +1,21 @@
-import 'package:camera/camera.dart';
-
-enum CameraStatus { uninitialized, initializing, ready, error, takingPicture }
-
+import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 abstract class CameraApi {
   // Camera Status
   // TODO: Doc.
-  CameraStatus get status;
-  Function(CameraStatus) onStatusChanged = (status) {};
-  void setStatus(CameraStatus newStatus);
+  native_camera_kit.CameraStatus get status;
+  Function(native_camera_kit.CameraStatus) onStatusChanged = (status) {};
+  void setStatus(native_camera_kit.CameraStatus newStatus);
 
   // Camera Controller
-  CameraController? get cameraController;
-  Function(CameraController?) onCameraControllerChanged = (cameraController) {};
-  void setCameraController(CameraController? newCameraController);
-
-  // Cameras
-  // TODO: Doc.
-  List<CameraDescription> get cameras;
-  Function(List<CameraDescription>) onCamerasChanged = (cameras) {};
-  void setCameras(List<CameraDescription> newCameras);
-
-  // Current Camera
-  CameraDescription? get currentCamera;
-  Function(CameraDescription?) onCurrentCameraChanged = (currentCamera) {};
-  void setCurrentCamera(CameraDescription? newCurrentCamera);
+  native_camera_kit.NativeCameraController? get cameraNativeController;
+  Function(native_camera_kit.NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
+  void setCameraNativeController(native_camera_kit.NativeCameraController? newCameraNativeController);
 
   // Flash Mode
   // TODO: Doc.
-  FlashMode? get flashMode;
-  Function(FlashMode?) onFlashModeChanged = (flashMode) {};
-  void setFlashMode(FlashMode? newFlashMode);
+  native_camera_kit.FlashMode get flashMode;
+  Function(native_camera_kit.FlashMode?) onFlashModeChanged = (flashMode) {};
+  void setFlashMode(native_camera_kit.FlashMode? newFlashMode);
 
   // Error Message
   // TODO: Doc.
@@ -37,11 +23,7 @@ abstract class CameraApi {
   Function(String?) onErrorMessageChanged = (errorMessage) {};
   void setErrorMessage(String? newErrorMessage);
 
-  // Picture Taken
-  // TODO: Doc.
-  XFile? get pictureTaken;
-  Function(XFile?) onPictureTakenChanged = (pictureTaken) {};
-  void setPictureTaken(XFile? newPictureTaken);
+
 
   /// Functions
   /// ---------------------------------------------------------------------------

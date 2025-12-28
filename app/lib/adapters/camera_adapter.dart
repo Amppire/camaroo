@@ -1,5 +1,5 @@
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:camera/camera.dart';
+  import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 import 'package:flutter/material.dart';
 
 class CameraAdapter {
@@ -7,16 +7,6 @@ class CameraAdapter {
     statusNotifier = ValueNotifier(cameraApi.status);
     cameraApi.onStatusChanged = (status) => statusNotifier.value = status;
 
-    camerasNotifier = ValueNotifier(cameraApi.cameras);
-    cameraApi.onCamerasChanged = (cameras) => camerasNotifier.value = cameras;
-
-    cameraControllerNotifier = ValueNotifier(cameraApi.cameraController);
-    cameraApi.onCameraControllerChanged = (cameraController) =>
-        cameraControllerNotifier.value = cameraController;
-
-    currentCameraNotifier = ValueNotifier(cameraApi.currentCamera);
-    cameraApi.onCurrentCameraChanged = (currentCamera) =>
-        currentCameraNotifier.value = currentCamera;
 
     flashModeNotifier = ValueNotifier(cameraApi.flashMode);
     cameraApi.onFlashModeChanged = (flashMode) =>
@@ -26,16 +16,9 @@ class CameraAdapter {
     cameraApi.onErrorMessageChanged = (errorMessage) =>
         errorMessageNotifier.value = errorMessage;
 
-    pictureTakenNotifier = ValueNotifier(cameraApi.pictureTaken);
-    cameraApi.onPictureTakenChanged = (pictureTaken) =>
-        pictureTakenNotifier.value = pictureTaken;
   }
 
-  late final ValueNotifier<CameraStatus> statusNotifier;
-  late final ValueNotifier<List<CameraDescription>> camerasNotifier;
-  late final ValueNotifier<CameraController?> cameraControllerNotifier;
-  late final ValueNotifier<CameraDescription?> currentCameraNotifier;
-  late final ValueNotifier<FlashMode?> flashModeNotifier;
+  late final ValueNotifier<native_camera_kit.CameraStatus> statusNotifier;
+  late final ValueNotifier<native_camera_kit.FlashMode?> flashModeNotifier;
   late final ValueNotifier<String?> errorMessageNotifier;
-  late final ValueNotifier<XFile?> pictureTakenNotifier;
 }

@@ -5,11 +5,11 @@ import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
 import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
 import 'package:camaroo/widgets/camera/flip_button.dart';
-import 'package:camera/camera.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 
 class Camera extends StatefulWidget {
   const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
@@ -37,13 +37,9 @@ class _CameraState extends State<Camera> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     // Clean up controller
-    widget.cameraAdapter.cameraControllerNotifier.value?.dispose();
-    widget.cameraAdapter.currentCameraNotifier.value = null;
-    widget.cameraAdapter.camerasNotifier.value = [];
-    widget.cameraAdapter.statusNotifier.value = CameraStatus.uninitialized;
+    widget.cameraAdapter.statusNotifier.value = native_camera_kit.CameraStatus.uninitialized;
     widget.cameraAdapter.errorMessageNotifier.value = null;
-    widget.cameraAdapter.pictureTakenNotifier.value = null;
-    widget.cameraAdapter.flashModeNotifier.value = FlashMode.off;
+    widget.cameraAdapter.flashModeNotifier.value = native_camera_kit.FlashMode.off;
     super.dispose();
   }
 
@@ -51,7 +47,7 @@ class _CameraState extends State<Camera> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ThemeConstants.backgroundColor,
-      body: ValueListenableBuilder<CameraStatus>(
+      body: ValueListenableBuilder<native_camera_kit.CameraStatus>(
         valueListenable: widget.cameraAdapter.statusNotifier,
         builder: (context, status, _) {
           return Stack(
@@ -95,13 +91,13 @@ class _CameraState extends State<Camera> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Flash control
-            ValueListenableBuilder<FlashMode?>(
+            ValueListenableBuilder<native_camera_kit.FlashMode?>(
               valueListenable: widget.cameraAdapter.flashModeNotifier,
-              builder: (context, flashMode, _) {
+              builder: (context, native_camera_kit.FlashMode? flashMode, _) {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   onLongPress: () => {},
-                  child: Icon(_getFlashIcon(flashMode), color: ThemeConstants.textAndIconColor, size: 24),
+                  child: Icon(_getFlashIcon( native_camera_kit.FlashMode.off), color: ThemeConstants.textAndIconColor, size: 24),
                 );
               },
             ),
@@ -119,7 +115,7 @@ class _CameraState extends State<Camera> {
     );
   }
 
-  Widget _buildBottomControls(CameraStatus status) {
+  Widget _buildBottomControls(native_camera_kit.CameraStatus status) {
     return SafeArea(
       top: false,
       child: Container(
@@ -129,34 +125,14 @@ class _CameraState extends State<Camera> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Gallery thumbnail
-            ValueListenableBuilder<XFile?>(
-              valueListenable: widget.cameraAdapter.pictureTakenNotifier,
-              builder: (context, picture, _) {
-                return GalleryThumbnail(picture: picture);
+            ValueListenableBuilder<String?>(
+              valueListenable: widget.cameraAdapter.errorMessageNotifier,
+              builder: (context, error, _) {
+                if (error == null) return const SizedBox.shrink();
+                return const SizedBox(width: 56);
               },
             ),
 
-            // Capture button
-            CaptureButton(status: status, onPressed: () => widget.cameraApi.takePicture()),
-
-            // Camera flip button
-            ValueListenableBuilder<List<CameraDescription>>(
-              valueListenable: widget.cameraAdapter.camerasNotifier,
-              builder: (context, cameras, _) {
-                if (cameras.length <= 1) {
-                  return const SizedBox(width: 56); // Spacer for symmetry
-                }
-                return ValueListenableBuilder<CameraDescription?>(
-                  valueListenable: widget.cameraAdapter.currentCameraNotifier,
-                  builder: (context, currentCamera, _) {
-                    if (currentCamera == null) {
-                      return const SizedBox(width: 56);
-                    }
-                    return FlipButton(cameraApi: widget.cameraApi, currentCamera: currentCamera);
-                  },
-                );
-              },
-            ),
           ],
         ),
       ),
@@ -203,15 +179,15 @@ class _CameraState extends State<Camera> {
     );
   }
 
-  IconData _getFlashIcon(FlashMode? mode) {
+  IconData _getFlashIcon(native_camera_kit.FlashMode? mode) {
     switch (mode) {
-      case FlashMode.off:
+      case native_camera_kit.FlashMode.off:
         return Icons.flash_off;
-      case FlashMode.auto:
+      case native_camera_kit.FlashMode.auto:
         return Icons.flash_auto;
-      case FlashMode.always:
+      case native_camera_kit.FlashMode.on:
         return Icons.flash_on;
-      case FlashMode.torch:
+      case native_camera_kit.FlashMode.torch:
         return Icons.flashlight_on;
       case null:
         return Icons.flash_off;

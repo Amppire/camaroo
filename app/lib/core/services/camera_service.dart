@@ -1,5 +1,5 @@
 import 'package:camaroo/utils/app_constants.dart';
-import 'package:camera/camera.dart';
+import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -10,79 +10,51 @@ class CameraApiModel implements CameraApi {
 
   final StorageService _storageService;
 
-  CameraStatus _cameraStatus = CameraStatus.uninitialized;
-  CameraController? _cameraController;
-  List<CameraDescription> _cameras = [];
-  CameraDescription? _currentCamera;
+
+  native_camera_kit.CameraStatus _cameraStatus = native_camera_kit.CameraStatus.uninitialized;
+  native_camera_kit.NativeCameraController? _cameraController;
   String? _errorMessage;
-  FlashMode? _flashMode = FlashMode.off;
-  XFile? _pictureTaken;
+  native_camera_kit.FlashMode? _flashMode = native_camera_kit.FlashMode.off;
 
   // Camera Status
   @override
-  CameraStatus get status => _cameraStatus;
+  native_camera_kit.CameraStatus get status => _cameraStatus;
 
   @override
-  Function(CameraStatus) onStatusChanged = (status) {};
+  Function(native_camera_kit.CameraStatus) onStatusChanged = (status) {};
 
   @override
-  void setStatus(CameraStatus newStatus) {
+  void setStatus(native_camera_kit.CameraStatus newStatus) {
     _cameraStatus = newStatus;
     onStatusChanged(newStatus);
   }
 
-  // Cameras
-  @override
-  List<CameraDescription> get cameras => _cameras;
-
-  @override
-  Function(List<CameraDescription>) onCamerasChanged = (cameras) {};
-
-  @override
-  void setCameras(List<CameraDescription> newCameras) {
-    _cameras = newCameras;
-    onCamerasChanged(newCameras);
-  }
 
   // Camera Controller
   @override
-  CameraController? get cameraController => _cameraController;
+  native_camera_kit.NativeCameraController? get cameraNativeController => _cameraController;
 
   @override
-  Function(CameraController?) onCameraControllerChanged = (cameraController) {};
+  Function(native_camera_kit.NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
 
   @override
-  void setCameraController(CameraController? newCameraController) {
-    _cameraController = newCameraController;
-    onCameraControllerChanged(newCameraController);
+  void setCameraNativeController(native_camera_kit.NativeCameraController? newCameraNativeController) {
+    _cameraController = newCameraNativeController;
+    onCameraNativeControllerChanged(newCameraNativeController);
   }
 
-  // Current Camera
-  @override
-  CameraDescription? get currentCamera => _currentCamera;
-
-  @override
-  Function(CameraDescription?) onCurrentCameraChanged = (currentCamera) {};
-
-  @override
-  void setCurrentCamera(CameraDescription? newCurrentCamera) {
-    _currentCamera = newCurrentCamera;
-    onCurrentCameraChanged(newCurrentCamera);
-  }
 
   // Flash Mode
   @override
-  FlashMode? get flashMode => _flashMode;
+  native_camera_kit.FlashMode get flashMode => _flashMode ?? native_camera_kit.FlashMode.off;
 
   @override
-  Function(FlashMode?) onFlashModeChanged = (flashMode) {};
+  Function(native_camera_kit.FlashMode?) onFlashModeChanged = (flash) {};
 
   @override
-  void setFlashMode(FlashMode? newFlashMode) {
+  void setFlashMode(native_camera_kit.FlashMode? newFlashMode) {
     _flashMode = newFlashMode;
     onFlashModeChanged(newFlashMode);
-    // Apply flash mode to controller
-    _applyFlashMode();
   }
 
   // Error Message
@@ -98,18 +70,6 @@ class CameraApiModel implements CameraApi {
     onErrorMessageChanged(newErrorMessage);
   }
 
-  @override
-  XFile? get pictureTaken => _pictureTaken;
-
-  @override
-  Function(XFile?) onPictureTakenChanged = (pictureTaken) {};
-
-  @override
-  void setPictureTaken(XFile? newPictureTaken) {
-    _pictureTaken = newPictureTaken;
-    onPictureTakenChanged(newPictureTaken);
-  }
-
   // ============================================================================
   // PUBLIC METHODS
   // ============================================================================
@@ -117,176 +77,72 @@ class CameraApiModel implements CameraApi {
   @override
   Future<void> initializeCamera() async {
     // Validation: Don't re-initialize if already initializing
-    if (status == CameraStatus.initializing) {
+    if (status == native_camera_kit.CameraStatus.initializing) {
       return;
     }
 
     // Update state
-    setStatus(CameraStatus.initializing);
+    setStatus(native_camera_kit.CameraStatus.initializing);
     setErrorMessage(null);
 
     try {
-      // Get available cameras if not already loaded
-      if (_cameras.isEmpty) {
-        _cameras = await availableCameras();
-        _cameras.sort(
-          (a, b) => a.lensDirection.name.compareTo(b.lensDirection.name),
-        );
-        onCamerasChanged(_cameras);
-        _currentCamera = _cameras.first;
-        onCurrentCameraChanged(_currentCamera);
-      }
-
-      // Business rule: Must have at least one camera
-      if (_cameras.isEmpty) {
-        setErrorMessage(AppConstants.noCamerasFound);
-        setStatus(CameraStatus.error);
-        return;
-      }
 
       // Dispose old controller if exists
       await _cameraController?.dispose();
 
-      // Create new controller with current camera
-      final camera = _currentCamera;
-      if (camera == null) {
-        setErrorMessage(AppConstants.noCameraSelected);
-        setStatus(CameraStatus.error);
-        return;
-      }
-
-      final controller = CameraController(
-        camera,
-        ResolutionPreset.high,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
 
       // Initialize the controller
-      await controller.initialize();
-
-      // Lock capture orientation to portrait
-      // Avoids weird behavior where the camera sensor rotates with the device.
-      await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
+      await _cameraController?.initializeDefault();
 
       // Set flash mode
-      await controller.setFlashMode(_flashMode ?? FlashMode.off);
+      await _cameraController?.setFlashMode(_flashMode ?? native_camera_kit.FlashMode.off);
 
       // Update state
-      setCameraController(controller);
-      setStatus(CameraStatus.ready);
-    } on CameraException catch (e) {
-      setErrorMessage('${AppConstants.cameraNotReady} ${e.description}');
-      setStatus(CameraStatus.error);
+      setCameraNativeController(_cameraController);
+      setStatus(native_camera_kit.CameraStatus.ready);
+    } on Error catch (e) {
+      setErrorMessage('${AppConstants.cameraNotReady} ${e.toString()}');
+      setStatus(native_camera_kit.CameraStatus.error);
     } catch (e) {
       setErrorMessage('${AppConstants.unexpectedError} $e');
-      setStatus(CameraStatus.error);
+      setStatus(native_camera_kit.CameraStatus.error);
     }
   }
 
   @override
   Future<void> switchCamera() async {
-    // Business rule: Can't switch if only one camera
-    if (cameras.length <= 1) {
-      setErrorMessage(AppConstants.onlyOneCameraAvailable);
-      return;
-    }
-
-    // Business rule: Can't switch while taking picture
-    if (status == CameraStatus.takingPicture) {
-      setErrorMessage(AppConstants.cannotSwitchWhileTakingPicture);
-      return;
-    }
-
-    // Switch between front camera and main rear camera
-    for (final camera in cameras) {
-      final currentCamera = _currentCamera!;
-      if (camera != _currentCamera &&
-          camera.lensDirection != currentCamera.lensDirection) {
-        setCurrentCamera(camera);
-        break;
-      }
-    }
-
-    // Re-initialize with new camera
-    await initializeCamera();
-  }
-
-  @override
-  Future<void> takePicture() async {
-    // Business rules: Camera must be ready
-    if (status != CameraStatus.ready) {
-      setErrorMessage(AppConstants.cameraNotReady);
-      return;
-    }
-
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      setErrorMessage(AppConstants.cameraControllerNotInitialized);
-      return;
-    }
-
-    setStatus(CameraStatus.takingPicture);
-    setErrorMessage(null);
-
-    try {
-      final XFile picture = await _cameraController!.takePicture();
-      setPictureTaken(picture);
-
-      final photo = Photo(id: picture.path, filePath: picture.path, capturedAt: DateTime.now());
-      await _storageService.photos.savePhoto(photo);
-      setStatus(CameraStatus.ready);
-    } on CameraException catch (e) {
-      setErrorMessage('${AppConstants.failedToTakePicture} ${e.description}');
-      setStatus(CameraStatus.ready);
-    } catch (e) {
-      setErrorMessage('${AppConstants.unexpectedError} $e');
-      setStatus(CameraStatus.ready);
-    }
+    // TODO: Implement
   }
 
   @override
   Future<void> toggleFlash() async {
     // Pure business logic - cycle through flash modes
-    FlashMode newMode;
-    switch (flashMode) {
-      case FlashMode.off:
-        newMode = FlashMode.auto;
+    native_camera_kit.FlashMode newMode;
+    switch (_flashMode ?? native_camera_kit.FlashMode.off) {
+      case native_camera_kit.FlashMode.off:
+        newMode = native_camera_kit.FlashMode.auto;
         break;
-      case FlashMode.auto:
-        newMode = FlashMode.always;
+      case native_camera_kit.FlashMode.auto:
+        newMode = native_camera_kit.FlashMode.on;
         break;
-      case FlashMode.always:
-        newMode = FlashMode.torch;
+      case native_camera_kit.FlashMode.on:
+        newMode = native_camera_kit.FlashMode.auto;
         break;
-      case FlashMode.torch:
-        newMode = FlashMode.off;
-        break;
-      case null:
-        newMode = FlashMode.auto;
+      case native_camera_kit.FlashMode.torch:
+        newMode = native_camera_kit.FlashMode.off;
         break;
     }
 
     setFlashMode(newMode);
+  }
+  
+  @override
+  void takePicture() {
+    // TODO: implement takePicture
   }
 
   // ============================================================================
   // PRIVATE HELPERS
   // ============================================================================
 
-  Future<void> _applyFlashMode() async {
-    if (_cameraController != null && _flashMode != null) {
-      try {
-        await _cameraController!.setFlashMode(_flashMode!);
-      } catch (e) {
-        if (kDebugMode) {
-          print('${AppConstants.failedToSetFlashMode} $e');
-        }
-      }
-    }
-  }
-
-  /// Dispose resources when done
-  Future<void> dispose() async {
-    await _cameraController?.dispose();
-  }
 }
