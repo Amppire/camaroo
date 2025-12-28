@@ -1,0 +1,17 @@
+name: camera_info_platform_interface
+description: Platform interface for camera_info plugin
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.4
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

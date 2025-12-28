@@ -4,6 +4,7 @@ import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:storage/storage.dart';
+import 'package:camera_info/camera_info.dart';
 
 class CameraApiModel implements CameraApi {
   CameraApiModel({required StorageService storageService}) : _storageService = storageService;
@@ -20,8 +21,9 @@ class CameraApiModel implements CameraApi {
   String? _errorMessage;
   FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
+  
+  CameraInfo _cameraInfo = CameraInfo.instance;
 
-  // Camera Status
   @override
   CameraStatus get status => _cameraStatus;
 
@@ -170,6 +172,8 @@ Future<void> initializeCamera() async {
     }
 
       await _getAllCameraZoomRanges();
+
+        await _testCameraInfo();  // Temporary test
 
 
     // Business rule: Must have at least one camera
@@ -353,6 +357,50 @@ Future<void> _getAllCameraZoomRanges() async {
       print('Failed to get zoom range for camera ${camera.name}: $e');
       await tempController.dispose();
     }
+  }
+}
+
+/// Test camera_info package (temporary for debugging)
+Future<void> _testCameraInfo() async {
+  print('\n🧪 Testing camera_info package...\n');
+  
+  try {
+    // Test 1: Get all properties
+    final allProps = await CameraInfo.instance.getAllCameraProperties();
+    print('Found ${allProps.length} cameras with properties');
+    
+    // Test 2: Get specific camera
+    if (cameras.isNotEmpty) {
+      
+      final firstCamera = cameras[2];
+      final props = await CameraInfo.instance.getCameraProperties(firstCamera.name);
+      print('\nFirst camera (${firstCamera.name}):');
+      print('  Focal Length: ${props.focalLength}');
+      print('  FOV: ${props.fieldOfView}');
+      print('  Sensor Size: ${props.sensorSize}');
+    }
+    
+    // Test 3: Calculate base zoom
+    final backCameras = cameras.where((c) => 
+      c.lensDirection == CameraLensDirection.back
+    ).toList();
+    
+    if (backCameras.length >= 2) {
+      final cam1 = allProps[backCameras[0].name];
+      final cam2 = allProps[backCameras[1].name];
+      
+      if (cam1?.fieldOfView != null && cam2?.fieldOfView != null) {
+        final relativeZoom = cam1!.fieldOfView! / cam2!.fieldOfView!;
+        print('\nRelative zoom between cameras:');
+        print('  ${backCameras[0].name}: 1.0x (reference)');
+        print('  ${backCameras[1].name}: ${relativeZoom.toStringAsFixed(2)}x');
+      }
+    }
+    
+    print('\n✅ camera_info package test complete!\n');
+  } catch (e, stack) {
+    print('❌ Error testing camera_info: $e');
+    print('Stack trace: $stack');
   }
 }
 

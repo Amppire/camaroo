@@ -1,0 +1,21 @@
+name: camera_info_android
+description: Android implementation of camera_info plugin
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.4
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera_info_platform_interface:
+    path: ../platform_interface
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.camaroo.camera_info_android
+        pluginClass: CameraInfoPlugin

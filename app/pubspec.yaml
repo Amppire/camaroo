@@ -39,6 +39,12 @@ dependencies:
   uuid: ^4.5.2
   storage:
     path: ../Packages/storage
+  camera_info:
+    path: ../Packages/camera_info
+  camera_info_ios:
+    path: ../Packages/camera_info/ios
+  camera_info_android:
+    path: ../Packages/camera_info/android
 
 dev_dependencies:
   flutter_test:
