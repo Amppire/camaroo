@@ -1,8 +1,6 @@
 import 'package:camaroo/utils/app_constants.dart';
-import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 import 'package:camaroo/core/abstractions/camera_api.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+import 'package:native_camera_kit/native_camera_kit.dart';
 import 'package:storage/storage.dart';
 
 class CameraApiModel implements CameraApi {
@@ -11,20 +9,20 @@ class CameraApiModel implements CameraApi {
   final StorageService _storageService;
 
 
-  native_camera_kit.CameraStatus _cameraStatus = native_camera_kit.CameraStatus.uninitialized;
-  native_camera_kit.NativeCameraController? _cameraController;
+  CameraStatus _cameraStatus = CameraStatus.uninitialized;
+  NativeCameraController? _cameraController;
   String? _errorMessage;
-  native_camera_kit.FlashMode? _flashMode = native_camera_kit.FlashMode.off;
+  FlashMode? _flashMode = FlashMode.off;
 
   // Camera Status
   @override
-  native_camera_kit.CameraStatus get status => _cameraStatus;
+  CameraStatus get status => _cameraStatus;
 
   @override
-  Function(native_camera_kit.CameraStatus) onStatusChanged = (status) {};
+  Function(CameraStatus) onStatusChanged = (status) {};
 
   @override
-  void setStatus(native_camera_kit.CameraStatus newStatus) {
+  void setStatus(CameraStatus newStatus) {
     _cameraStatus = newStatus;
     onStatusChanged(newStatus);
   }
@@ -32,13 +30,13 @@ class CameraApiModel implements CameraApi {
 
   // Camera Controller
   @override
-  native_camera_kit.NativeCameraController? get cameraNativeController => _cameraController;
+  NativeCameraController? get cameraNativeController => _cameraController;
 
   @override
-  Function(native_camera_kit.NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
+  Function(NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
 
   @override
-  void setCameraNativeController(native_camera_kit.NativeCameraController? newCameraNativeController) {
+  void setCameraNativeController(NativeCameraController? newCameraNativeController) {
     _cameraController = newCameraNativeController;
     onCameraNativeControllerChanged(newCameraNativeController);
   }
@@ -46,13 +44,13 @@ class CameraApiModel implements CameraApi {
 
   // Flash Mode
   @override
-  native_camera_kit.FlashMode get flashMode => _flashMode ?? native_camera_kit.FlashMode.off;
+  FlashMode get flashMode => _flashMode ?? FlashMode.off;
 
   @override
-  Function(native_camera_kit.FlashMode?) onFlashModeChanged = (flash) {};
+  Function(FlashMode?) onFlashModeChanged = (flash) {};
 
   @override
-  void setFlashMode(native_camera_kit.FlashMode? newFlashMode) {
+  void setFlashMode(FlashMode? newFlashMode) {
     _flashMode = newFlashMode;
     onFlashModeChanged(newFlashMode);
   }
@@ -76,36 +74,12 @@ class CameraApiModel implements CameraApi {
 
   @override
   Future<void> initializeCamera() async {
-    // Validation: Don't re-initialize if already initializing
-    if (status == native_camera_kit.CameraStatus.initializing) {
-      return;
-    }
-
-    // Update state
-    setStatus(native_camera_kit.CameraStatus.initializing);
-    setErrorMessage(null);
-
     try {
-
-      // Dispose old controller if exists
-      await _cameraController?.dispose();
-
-
-      // Initialize the controller
       await _cameraController?.initializeDefault();
-
-      // Set flash mode
-      await _cameraController?.setFlashMode(_flashMode ?? native_camera_kit.FlashMode.off);
-
-      // Update state
-      setCameraNativeController(_cameraController);
-      setStatus(native_camera_kit.CameraStatus.ready);
-    } on Error catch (e) {
-      setErrorMessage('${AppConstants.cameraNotReady} ${e.toString()}');
-      setStatus(native_camera_kit.CameraStatus.error);
     } catch (e) {
+      print('Error initializing camera: $e');
       setErrorMessage('${AppConstants.unexpectedError} $e');
-      setStatus(native_camera_kit.CameraStatus.error);
+      setStatus(CameraStatus.error);
     }
   }
 
@@ -117,19 +91,19 @@ class CameraApiModel implements CameraApi {
   @override
   Future<void> toggleFlash() async {
     // Pure business logic - cycle through flash modes
-    native_camera_kit.FlashMode newMode;
-    switch (_flashMode ?? native_camera_kit.FlashMode.off) {
-      case native_camera_kit.FlashMode.off:
-        newMode = native_camera_kit.FlashMode.auto;
+    FlashMode newMode;
+    switch (_flashMode ?? FlashMode.off) {
+      case FlashMode.off:
+        newMode = FlashMode.auto;
         break;
-      case native_camera_kit.FlashMode.auto:
-        newMode = native_camera_kit.FlashMode.on;
+      case FlashMode.auto:
+        newMode = FlashMode.on;
         break;
-      case native_camera_kit.FlashMode.on:
-        newMode = native_camera_kit.FlashMode.auto;
+      case FlashMode.on:
+        newMode = FlashMode.auto;
         break;
-      case native_camera_kit.FlashMode.torch:
-        newMode = native_camera_kit.FlashMode.off;
+      case FlashMode.torch:
+        newMode = FlashMode.off;
         break;
     }
 

@@ -1,7 +1,7 @@
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:flutter/material.dart';
-import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
+import 'package:native_camera_kit/native_camera_kit.dart';
 
 /// Heart of the camera app. Displays the live camera feed. This takes up the entire screen.
 /// TODO: Add pinch to zoom.
@@ -9,12 +9,12 @@ class Viewfinder extends StatelessWidget {
   const Viewfinder({super.key, required this.cameraApi, required this.cameraAdapter, required this.status});
   final CameraApi cameraApi;
   final CameraAdapter cameraAdapter;
-  final native_camera_kit.CameraStatus status;
+  final CameraStatus status;
 
   @override
   Widget build(BuildContext context) {
    
-          if (status == native_camera_kit.CameraStatus.initializing) {
+          if (status == CameraStatus.initializing) {
           return const Center(
             child: CircularProgressIndicator(
               color: Colors.white,
@@ -23,7 +23,7 @@ class Viewfinder extends StatelessWidget {
           );
         }
 
-        if (status == native_camera_kit.CameraStatus.error ) {
+        if (status == CameraStatus.error ) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -87,7 +87,7 @@ class Viewfinder extends StatelessWidget {
             child: SizedBox(
               width: size.width,
               height: size.height,
-              child: native_camera_kit.NativeCameraPreview(controller: cameraApi.cameraNativeController ?? native_camera_kit.NativeCameraController()),
+              child: cameraApi.cameraNativeController != null ? NativeCameraPreview(controller: cameraApi.cameraNativeController!) : const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
             ),
           ),
         );
