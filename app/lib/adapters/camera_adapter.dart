@@ -25,12 +25,26 @@ class CameraAdapter {
     zoomLevelNotifier = ValueNotifier(cameraApi.zoomLevel);
     cameraApi.onZoomLevelChanged = (zoomLevel) => zoomLevelNotifier.value = zoomLevel;
 
-        minZoomLevelNotifier = ValueNotifier(cameraApi.minZoomLevel);
+    minZoomLevelNotifier = ValueNotifier(cameraApi.minZoomLevel);
     maxZoomLevelNotifier = ValueNotifier(cameraApi.maxZoomLevel);
     cameraApi.onZoomRangeChanged = (min, max) {
       minZoomLevelNotifier.value = min;
       maxZoomLevelNotifier.value = max;
     };
+
+    // Focal Length (mm) - iOS-style
+    focalLengthNotifier = ValueNotifier(cameraApi.focalLength);
+    cameraApi.onFocalLengthChanged = (focalLength) => focalLengthNotifier.value = focalLength;
+
+    minFocalLengthNotifier = ValueNotifier(cameraApi.minFocalLength);
+    maxFocalLengthNotifier = ValueNotifier(cameraApi.maxFocalLength);
+    cameraApi.onFocalLengthRangeChanged = (min, max) {
+      minFocalLengthNotifier.value = min;
+      maxFocalLengthNotifier.value = max;
+    };
+
+    focalLengthStopsNotifier = ValueNotifier(cameraApi.focalLengthStops);
+    cameraApi.onFocalLengthStopsChanged = (stops) => focalLengthStopsNotifier.value = stops;
 
     errorMessageNotifier = ValueNotifier(cameraApi.errorMessage);
     cameraApi.onErrorMessageChanged = (errorMessage) =>
@@ -49,6 +63,10 @@ class CameraAdapter {
   late final ValueNotifier<double?> zoomLevelNotifier;
   late final ValueNotifier<double?> minZoomLevelNotifier;
   late final ValueNotifier<double?> maxZoomLevelNotifier;
+  late final ValueNotifier<double?> focalLengthNotifier;
+  late final ValueNotifier<double?> minFocalLengthNotifier;
+  late final ValueNotifier<double?> maxFocalLengthNotifier;
+  late final ValueNotifier<List<double>> focalLengthStopsNotifier;
   late final ValueNotifier<String?> errorMessageNotifier;
   late final ValueNotifier<XFile?> pictureTakenNotifier;
 }

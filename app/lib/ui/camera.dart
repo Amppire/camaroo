@@ -128,10 +128,10 @@ Widget _buildBottomControls(CameraStatus status) {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Zoom slider (above capture button)
+        // Focal length slider (above capture button) - iOS-style
         ValueListenableBuilder<double?>(
-          valueListenable: widget.cameraAdapter.zoomLevelNotifier,
-          builder: (context, zoomLevel, _) {
+          valueListenable: widget.cameraAdapter.focalLengthNotifier,
+          builder: (context, focalLength, _) {
             return ValueListenableBuilder<CameraController?>(
               valueListenable: widget.cameraAdapter.cameraControllerNotifier,
               builder: (context, controller, _) {
@@ -139,12 +139,17 @@ Widget _buildBottomControls(CameraStatus status) {
                   return const SizedBox.shrink();
                 }
                 
+                final minFocal = widget.cameraAdapter.minFocalLengthNotifier.value ?? 2.0;
+                final maxFocal = widget.cameraAdapter.maxFocalLengthNotifier.value ?? 200.0;
+                final stops = widget.cameraAdapter.focalLengthStopsNotifier.value;
+                
                 return ZoomSlider(
-                  currentZoom: zoomLevel ?? 1.0,
-                  minZoom: widget.cameraAdapter.minZoomLevelNotifier.value ?? 0.5,
-                  maxZoom: widget.cameraAdapter.maxZoomLevelNotifier.value ?? 5.0,
-                  onZoomChanged: (zoom) async {
-                    widget.cameraApi.setZoom(zoom);
+                  currentFocalLength: focalLength ?? minFocal,
+                  minFocalLength: minFocal,
+                  maxFocalLength: maxFocal,
+                  focalLengthStops: stops.isNotEmpty ? stops : [minFocal],
+                  onFocalLengthChanged: (focalLengthMm) async {
+                    await widget.cameraApi.setFocalLength(focalLengthMm);
                   },
                 );
               },

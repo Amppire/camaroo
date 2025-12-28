@@ -4,60 +4,89 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:camaroo/utils/painters/zoom_track_painter.dart';
 
-class ZoomSlider extends StatelessWidget {
+class ZoomSlider extends StatefulWidget {
 
-  final double currentZoom;
-  final double minZoom;
-  final double maxZoom;
-  final Function(double) onZoomChanged;
+  final double currentFocalLength; // in mm
+  final double minFocalLength; // in mm
+  final double maxFocalLength; // in mm
+  final List<double> focalLengthStops; // in mm (camera switch points)
+  final Function(double) onFocalLengthChanged; // receives mm value
 
-  ZoomSlider({
+  const ZoomSlider({
     super.key,
-    required this.currentZoom,
-    required this.minZoom,
-    required this.maxZoom,
-    required this.onZoomChanged,
+    required this.currentFocalLength,
+    required this.minFocalLength,
+    required this.maxFocalLength,
+    required this.focalLengthStops,
+    required this.onFocalLengthChanged,
   });
 
+  @override
+  State<ZoomSlider> createState() => _ZoomSliderState();
+}
 
-  late final ValueNotifier<double> _localZoomNotifier = ValueNotifier(currentZoom);
+class _ZoomSliderState extends State<ZoomSlider> {
+  late ValueNotifier<double> _localFocalLengthNotifier;
   final ValueNotifier<bool> _isDraggingNotifier = ValueNotifier(false);
 
+  @override
+  void initState() {
+    super.initState();
+    _localFocalLengthNotifier = ValueNotifier(widget.currentFocalLength);
+  }
 
+  @override
+  void didUpdateWidget(ZoomSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentFocalLength != widget.currentFocalLength) {
+      _localFocalLengthNotifier.value = widget.currentFocalLength;
+    }
+  }
 
-  // Convert linear slider position (0-1) to logarithmic zoom value
-  double _sliderToZoom(double sliderValue) {
-    final minLog = math.log(minZoom);
-    final maxLog = math.log(maxZoom);
+  @override
+  void dispose() {
+    _localFocalLengthNotifier.dispose();
+    _isDraggingNotifier.dispose();
+    super.dispose();
+  }
+
+  // Convert linear slider position (0-1) to logarithmic focal length (mm)
+  double _sliderToFocalLength(double sliderValue) {
+    final minLog = math.log(widget.minFocalLength);
+    final maxLog = math.log(widget.maxFocalLength);
     final logValue = minLog + (sliderValue * (maxLog - minLog));
-    return math.exp(logValue);
+    final focalLength = math.exp(logValue);
+    
+    // Clamp and validate
+    if (focalLength.isNaN || focalLength.isInfinite || focalLength <= 0) {
+      return widget.minFocalLength;
+    }
+    return focalLength.clamp(widget.minFocalLength, widget.maxFocalLength);
   }
 
-  // Convert logarithmic zoom value to linear slider position (0-1)
-  double _zoomToSlider(double zoom) {
-    final minLog = math.log(minZoom);
-    final maxLog = math.log(maxZoom);
-    final logZoom = math.log(zoom);
-    return (logZoom - minLog) / (maxLog - minLog);
+  // Convert logarithmic focal length (mm) to linear slider position (0-1)
+  double _focalLengthToSlider(double focalLength) {
+    if (focalLength <= 0 || focalLength.isNaN || focalLength.isInfinite) {
+      return 0.0;
+    }
+    
+    final clamped = focalLength.clamp(widget.minFocalLength, widget.maxFocalLength);
+    final minLog = math.log(widget.minFocalLength);
+    final maxLog = math.log(widget.maxFocalLength);
+    final logFocalLength = math.log(clamped);
+    
+    final sliderValue = (logFocalLength - minLog) / (maxLog - minLog);
+    
+    // Clamp to 0-1 range
+    return sliderValue.clamp(0.0, 1.0);
   }
 
-  // Define zoom stops for visual markers
-  List<double> get _zoomStops {
-    // Common zoom values that should be marked
-    List<double> stops = [0.5, 1.0, 2.0, 5.0, 10.0];
-    // Only include stops within the valid range
-    return stops
-        .where((z) => z >= minZoom && z <= maxZoom)
-        .toList();
-  }
-
-  String _getZoomLabel(double zoom) {
-    if (zoom < 1) {
-      return '${zoom.toStringAsFixed(1)}x';
-    } else if (zoom < 10) {
-      return '${zoom.toStringAsFixed(1)}x';
+  String _getFocalLengthLabel(double focalLength) {
+    // Format like iOS: "13mm", "26mm", "52mm"
+    if (focalLength < 10) {
+      return '${focalLength.toStringAsFixed(1)}mm';
     } else {
-      return '${zoom.toStringAsFixed(0)}x';
+      return '${focalLength.toStringAsFixed(0)}mm';
     }
   }
 
@@ -69,7 +98,7 @@ class ZoomSlider extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Zoom label
+          // Focal length label
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: BackdropFilter(
@@ -88,86 +117,85 @@ class ZoomSlider extends StatelessWidget {
                   ),
                 ),
                 child: ValueListenableBuilder(
-                  valueListenable: _localZoomNotifier,
-                  builder: (context, double localZoom, _) => Text(
-                  _getZoomLabel(localZoom),
-                  style: const TextStyle(
-                    color: ThemeConstants.textAndIconColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  valueListenable: _localFocalLengthNotifier,
+                  builder: (context, double localFocalLength, _) => Text(
+                    _getFocalLengthLabel(localFocalLength),
+                    style: const TextStyle(
+                      color: ThemeConstants.textAndIconColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          // Zoom slider with logarithmic scaling
-            ValueListenableBuilder(
-                    valueListenable: _localZoomNotifier,
-                    builder: (context, double localZoom, _) =>
-                        ValueListenableBuilder(
-                          valueListenable: _isDraggingNotifier,
-                          builder: (context, bool isDragging, _) =>SizedBox(
-            height: 32,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Background track with markers
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: ZoomTrackPainter(
-                      minZoom: minZoom,
-                      maxZoom: maxZoom,
-                      zoomStops: _zoomStops,
-                      zoomToSlider: _zoomToSlider,
-                    ),
-                  ),
-                ),
+          // Focal length slider with logarithmic scaling
+          ValueListenableBuilder(
+            valueListenable: _localFocalLengthNotifier,
+            builder: (context, double localFocalLength, _) =>
+                ValueListenableBuilder(
+                  valueListenable: _isDraggingNotifier,
+                  builder: (context, bool isDragging, _) => SizedBox(
+                    height: 32,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Background track with markers
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: ZoomTrackPainter(
+                              minZoom: widget.minFocalLength,
+                              maxZoom: widget.maxFocalLength,
+                              zoomStops: widget.focalLengthStops,
+                              zoomToSlider: _focalLengthToSlider,
+                            ),
+                          ),
+                        ),
 
-                // Slider (0-1 linear, but represents logarithmic zoom)
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 2,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 12,
-                      elevation: 4,
-                    ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 20,
-                    ),
-                    activeTrackColor: ThemeConstants.textAndIconColor,
-                    inactiveTrackColor: ThemeConstants.textAndIconColor
-                        .withValues(alpha: 0.3),
-                    thumbColor: ThemeConstants.textAndIconColor,
-                    overlayColor: ThemeConstants.textAndIconColor.withValues(alpha: 0.2)
-                  ),
-               child: Slider(
-                            value: _zoomToSlider(
-                              localZoom.clamp(minZoom, maxZoom),
+                        // Slider (0-1 linear, but represents logarithmic focal length)
+                        SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 2,
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 12,
+                              elevation: 4,
+                            ),
+                            overlayShape: const RoundSliderOverlayShape(
+                              overlayRadius: 20,
+                            ),
+                            activeTrackColor: ThemeConstants.textAndIconColor,
+                            inactiveTrackColor: ThemeConstants.textAndIconColor
+                                .withValues(alpha: 0.3),
+                            thumbColor: ThemeConstants.textAndIconColor,
+                            overlayColor: ThemeConstants.textAndIconColor.withValues(alpha: 0.2)
+                          ),
+                          child: Slider(
+                            value: _focalLengthToSlider(
+                              localFocalLength.clamp(widget.minFocalLength, widget.maxFocalLength),
                             ),
                             min: 0.0,
                             max: 1.0,
                             onChanged: (sliderValue) {
-                              final zoomValue = _sliderToZoom(sliderValue);
-                              _localZoomNotifier.value = zoomValue;
+                              final focalLengthValue = _sliderToFocalLength(sliderValue);
+                              _localFocalLengthNotifier.value = focalLengthValue;
                               _isDraggingNotifier.value = true;
-                              onZoomChanged(zoomValue);
+                              widget.onFocalLengthChanged(focalLengthValue);
                             },
                             onChangeEnd: (sliderValue) {
                               _isDraggingNotifier.value = false;
                             },
                           ),
                         ),
-                  ]),
-                ),),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
-          );
-        
-    
+          ),
+        ],
+      ),
+    );
   }
 }
-

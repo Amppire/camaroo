@@ -31,12 +31,28 @@ abstract class CameraApi {
   Function(FlashMode?) onFlashModeChanged = (flashMode) {};
   void setFlashMode(FlashMode? newFlashMode);
 
-  // Zoom Level
+  // Zoom Level (deprecated - use focalLength instead)
   double? get zoomLevel;
   Function(double?) onZoomLevelChanged = (zoomLevel) {};
   void setZoomLevel(double? newZoomLevel);
 
-  // Min/Max Zoom Levels
+  // Focal Length (in mm) - iOS-style
+  double? get focalLength;
+  Function(double?) onFocalLengthChanged = (focalLength) {};
+  void _setFocalLengthState(double? newFocalLength); // Internal state setter
+
+  // Min/Max Focal Lengths (in mm)
+  double? get minFocalLength;
+  double? get maxFocalLength;
+  Function(double, double) onFocalLengthRangeChanged = (min, max) {};
+  void setFocalLengthRange(double min, double max);
+
+  // Focal Length Stops (camera switch points in mm)
+  List<double> get focalLengthStops;
+  Function(List<double>) onFocalLengthStopsChanged = (stops) {};
+  void setFocalLengthStops(List<double> stops);
+
+  // Min/Max Zoom Levels (deprecated - kept for compatibility)
   double? get minZoomLevel;
   double? get maxZoomLevel;
   Function(double, double) onZoomRangeChanged = (min, max) {};
@@ -77,8 +93,13 @@ abstract class CameraApi {
   ///
   void toggleFlash();
 
-  /// Sets the zoom level.
+  /// Sets the zoom level (deprecated - use setFocalLength instead).
   /// Will return error if the zoom level is not available.
   ///
   void setZoom(double zoom);
+
+  /// Sets the focal length in millimeters (iOS-style).
+  /// Automatically switches cameras and applies digital zoom as needed.
+  ///
+  Future<void> setFocalLength(double focalLengthMm);
 }

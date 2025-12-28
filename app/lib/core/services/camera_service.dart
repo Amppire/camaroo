@@ -22,9 +22,15 @@ class CameraApiModel implements CameraApi {
   FlashMode? _flashMode = FlashMode.off;
   XFile? _pictureTaken;
   
+  // Focal length (mm) - iOS-style
+  double? _focalLength;
+  double? _minFocalLength;
+  double? _maxFocalLength;
+  List<double> _focalLengthStops = [];
+  
   CameraInfo _cameraInfo = CameraInfo.instance;
 
-    // Store camera hardware properties
+  // Store camera hardware properties
   final Map<String, CameraProperties> _cameraProperties = {};
   
   // Store base zoom for each camera (calculated from focal length)
@@ -127,6 +133,49 @@ class CameraApiModel implements CameraApi {
     onZoomRangeChanged(min, max);
   }
 
+  // Focal Length (mm) - iOS-style
+  @override
+  double? get focalLength => _focalLength;
+  
+  @override
+  Function(double?) onFocalLengthChanged = (focalLength) {};
+  
+  // Internal helper to update focal length state
+  void _updateFocalLengthState(double? newFocalLength) {
+    _focalLength = newFocalLength;
+    onFocalLengthChanged(newFocalLength);
+  }
+
+  // Min/Max Focal Lengths (mm)
+  @override
+  double? get minFocalLength => _minFocalLength;
+  
+  @override
+  double? get maxFocalLength => _maxFocalLength;
+  
+  @override
+  Function(double, double) onFocalLengthRangeChanged = (min, max) {};
+  
+  @override
+  void setFocalLengthRange(double min, double max) {
+    _minFocalLength = min;
+    _maxFocalLength = max;
+    onFocalLengthRangeChanged(min, max);
+  }
+
+  // Focal Length Stops (mm)
+  @override
+  List<double> get focalLengthStops => _focalLengthStops;
+  
+  @override
+  Function(List<double>) onFocalLengthStopsChanged = (stops) {};
+  
+  @override
+  void setFocalLengthStops(List<double> stops) {
+    _focalLengthStops = stops;
+    onFocalLengthStopsChanged(stops);
+  }
+
   // Error Message
   @override
   String? get errorMessage => _errorMessage;
@@ -222,11 +271,24 @@ Future<void> initializeCamera() async {
     // Set flash mode
     await controller.setFlashMode(_flashMode ?? FlashMode.off);
 
-    // ⭐ FETCH AND SET ZOOM RANGE (THIS IS THE FIX!)
+    // ⭐ FETCH AND SET ZOOM RANGE
     final minZoom = await controller.getMinZoomLevel();
     final maxZoom = await controller.getMaxZoomLevel();
     setZoomRange(minZoom, maxZoom);
-    setZoomLevel(1.0); // Set initial zoom to 1x
+    
+    // Set initial focal length to camera's base focal length
+    final props = _cameraProperties[camera.name];
+    if (props?.focalLength != null) {
+      _updateFocalLengthState(props!.focalLength);
+      // Also set zoom level for backward compatibility
+      final wideFocalLength = _getWideCameraFocalLength();
+      if (wideFocalLength != null) {
+        final zoomRatio = props.focalLength! / wideFocalLength;
+        setZoomLevel(zoomRatio);
+      }
+    } else {
+      setZoomLevel(1.0); // Fallback
+    }
 
     // Update state
     setCameraController(controller);
@@ -329,79 +391,54 @@ Future<void> switchCamera() async {
 
   // Add this method to CameraApiModel class
 
-/// Set zoom level
+/// Set zoom level (deprecated - use setFocalLength instead)
 @override
 Future<void> setZoom(double zoom) async {
+  // Convert zoom to focal length and use setFocalLength
+  final wideFocalLength = _getWideCameraFocalLength();
+  if (wideFocalLength != null) {
+    final focalLengthMm = wideFocalLength * zoom;
+    await setFocalLength(focalLengthMm);
+  }
+}
+
+/// Set focal length in millimeters (iOS-style)
+@override
+Future<void> setFocalLength(double focalLengthMm) async {
   if (_cameraController == null || !_cameraController!.value.isInitialized) {
     return;
   }
 
-
   try {
-    final minZoom = minZoomLevel;
-    final maxZoom = maxZoomLevel;
-    if (minZoom == null || maxZoom == null) {
-      return;
-    }
-    final clampedZoom = zoom.clamp(
-      minZoom,
-      maxZoom,
-    );
-    await _updateCamera(clampedZoom.toDouble());
-
+    // Clamp to valid range
+    final minFocal = _minFocalLength ?? 2.0;
+    final maxFocal = _maxFocalLength ?? 200.0;
+    final clampedFocalLength = focalLengthMm.clamp(minFocal, maxFocal);
     
-    await _cameraController!.setZoomLevel(clampedZoom.toDouble());
+    // Update camera based on focal length
+    await _updateCameraForFocalLength(clampedFocalLength);
+    
   } catch (e) {
-    print('Error setting zoom: $e');
+    if (kDebugMode) {
+      print('Error setting focal length: $e');
+    }
   }
 }
 
-/// Update camera based on zoom level using focal length conversion
-Future<void> _updateCamera(double totalZoom) async {
+/// Update camera based on focal length (mm) - iOS-style
+Future<void> _updateCameraForFocalLength(double targetFocalLengthMm) async {
   final currentCamera = _currentCamera;
   if (currentCamera == null) {
     return;
   }
 
   try {
-    // Step 1: Convert total zoom to effective focal length
-    final targetEffectiveFocalLength = totalZoomToEffectiveFocalLength(totalZoom);
-    
-    if (targetEffectiveFocalLength == null) {
-      if (kDebugMode) {
-        print('⚠️ Cannot calculate effective focal length for zoom: $totalZoom');
-      }
-      return;
-    }
-    
     if (kDebugMode) {
-      print('🎯 Target: ${totalZoom.toStringAsFixed(2)}x zoom = ${targetEffectiveFocalLength.toStringAsFixed(2)}mm effective focal length');
+      print('🎯 Setting focal length: ${targetFocalLengthMm.toStringAsFixed(1)}mm');
     }
     
-    // Step 2: Get current camera's properties
-    final currentProps = _cameraProperties[currentCamera.name];
-    if (currentProps?.focalLength == null) {
-      if (kDebugMode) {
-        print('⚠️ Current camera focal length not available');
-      }
-      return;
-    }
-    
-    final currentBaseFocalLength = currentProps!.focalLength!;
-    
-    // Step 3: Calculate current effective focal length
-    final currentDigitalZoom = _zoomLevel ?? 1.0;
-    final currentEffectiveFocalLength = currentBaseFocalLength * currentDigitalZoom;
-    
-    if (kDebugMode) {
-      print('📷 Current: ${currentCamera.name}');
-      print('   Base focal length: ${currentBaseFocalLength.toStringAsFixed(2)}mm');
-      print('   Digital zoom: ${currentDigitalZoom.toStringAsFixed(2)}x');
-      print('   Effective focal length: ${currentEffectiveFocalLength.toStringAsFixed(2)}mm');
-    }
-    
-    // Step 4: Find best camera for target effective focal length
-    final bestCamera = _findBestCameraForEffectiveFocalLength(targetEffectiveFocalLength);
+    // Step 1: Find best camera for target focal length
+    final bestCamera = _findBestCameraForEffectiveFocalLength(targetFocalLengthMm);
     
     if (bestCamera == null) {
       if (kDebugMode) {
@@ -413,26 +450,25 @@ Future<void> _updateCamera(double totalZoom) async {
     final bestProps = _cameraProperties[bestCamera.name];
     final bestBaseFocalLength = bestProps?.focalLength;
     
-    if (bestBaseFocalLength == null) {
+    if (bestBaseFocalLength == null || bestBaseFocalLength <= 0) {
       if (kDebugMode) {
         print('⚠️ Best camera focal length not available');
       }
       return;
     }
     
-    // Step 5: Check if we need to switch cameras
+    // Step 2: Check if we need to switch cameras
     final needsSwitch = bestCamera != currentCamera;
     
     if (needsSwitch) {
       if (kDebugMode) {
-        print('🔄 Need to switch cameras');
-        print('   From: ${currentCamera.name} (${currentBaseFocalLength.toStringAsFixed(2)}mm)');
-        print('   To: ${bestCamera.name} (${bestBaseFocalLength.toStringAsFixed(2)}mm)');
+        print('🔄 Switching cameras');
+        print('   From: ${currentCamera.name}');
+        print('   To: ${bestCamera.name} (${bestBaseFocalLength.toStringAsFixed(1)}mm base)');
       }
       
       // Switch to best camera
-      setCurrentCamera(bestCamera);
-      await initializeCamera();
+      await _switchToCamera(bestCamera);
       
       // Ensure controller is ready
       if (_cameraController == null || !_cameraController!.value.isInitialized) {
@@ -440,8 +476,9 @@ Future<void> _updateCamera(double totalZoom) async {
       }
     }
     
-    // Step 6: Calculate digital zoom for the selected camera
-    final requiredDigitalZoom = targetEffectiveFocalLength / bestBaseFocalLength;
+    // Step 3: Calculate digital zoom for the selected camera
+    // Digital zoom = target focal length / camera base focal length
+    final requiredDigitalZoom = targetFocalLengthMm / bestBaseFocalLength;
     
     // Get camera's digital zoom range
     final minDigital = await _cameraController!.getMinZoomLevel();
@@ -452,18 +489,29 @@ Future<void> _updateCamera(double totalZoom) async {
     
     if (kDebugMode) {
       print('📊 Digital zoom calculation:');
-      print('   Target effective: ${targetEffectiveFocalLength.toStringAsFixed(2)}mm');
-      print('   Camera base: ${bestBaseFocalLength.toStringAsFixed(2)}mm');
+      print('   Target: ${targetFocalLengthMm.toStringAsFixed(1)}mm');
+      print('   Camera base: ${bestBaseFocalLength.toStringAsFixed(1)}mm');
       print('   Required digital: ${requiredDigitalZoom.toStringAsFixed(2)}x');
       print('   Clamped digital: ${clampedDigitalZoom.toStringAsFixed(2)}x');
     }
     
-    // Step 7: Apply zoom
+    // Step 4: Apply zoom
+    // When switching cameras, the new camera starts at its base focal length (1.0x digital zoom)
+    // Then we apply the required digital zoom to reach the target focal length
     await _cameraController!.setZoomLevel(clampedDigitalZoom);
-    setZoomLevel(totalZoom);
+    
+    // Update state
+    _updateFocalLengthState(targetFocalLengthMm);
+    
+    // Also update zoom level for backward compatibility
+    final wideFocalLength = _getWideCameraFocalLength();
+    if (wideFocalLength != null) {
+      final zoomRatio = targetFocalLengthMm / wideFocalLength;
+      setZoomLevel(zoomRatio);
+    }
     
     if (kDebugMode) {
-      print('✅ Applied: ${totalZoom.toStringAsFixed(2)}x total → ${bestCamera.name} @ ${clampedDigitalZoom.toStringAsFixed(2)}x digital');
+      print('✅ Applied: ${targetFocalLengthMm.toStringAsFixed(1)}mm → ${bestCamera.name} @ ${clampedDigitalZoom.toStringAsFixed(2)}x digital');
     }
     
   } catch (e) {
@@ -540,18 +588,148 @@ Future<void> _loadCameraProperties() async {
       }
     }
     
+    // Calculate focal length stops and range
+    _calculateFocalLengthStops();
+    
     // Debug: Print what we stored
     if (kDebugMode) {
       print('\n📊 Stored ${_cameraProperties.length} camera properties');
       for (final entry in _cameraProperties.entries) {
         print('   ${entry.key}: FL=${entry.value.focalLength?.toStringAsFixed(2) ?? "N/A"}mm');
       }
+      print('📍 Focal length stops: $_focalLengthStops');
+      print('📏 Focal length range: ${_minFocalLength?.toStringAsFixed(1) ?? "N/A"}mm - ${_maxFocalLength?.toStringAsFixed(1) ?? "N/A"}mm');
     }
     
   } catch (e) {
     if (kDebugMode) {
       print('❌ Error loading camera properties: $e');
     }
+  }
+}
+
+/// Calculate focal length stops (camera switch points in mm)
+void _calculateFocalLengthStops() {
+  final backCameras = _cameras
+      .where((c) => c.lensDirection == CameraLensDirection.back)
+      .toList();
+  
+  // Get base focal lengths for all back cameras
+  final focalLengths = <double>[];
+  double? minFocal;
+  double? maxFocal;
+  
+  for (final camera in backCameras) {
+    final props = _cameraProperties[camera.name];
+    final focalLength = props?.focalLength;
+    
+    if (focalLength != null && focalLength > 0) {
+      focalLengths.add(focalLength);
+      
+      if (minFocal == null || focalLength < minFocal) {
+        minFocal = focalLength;
+      }
+      
+      // Calculate max focal length (base focal length × max digital zoom)
+      // Estimate max digital zoom as 10x (typical for most cameras)
+      final estimatedMaxFocal = focalLength * 10.0;
+      if (maxFocal == null || estimatedMaxFocal > maxFocal) {
+        maxFocal = estimatedMaxFocal;
+      }
+    }
+  }
+  
+  // Sort focal lengths
+  focalLengths.sort();
+  
+  // Set stops (base focal lengths of each camera)
+  setFocalLengthStops(focalLengths);
+  
+  // Set range
+  if (minFocal != null && maxFocal != null) {
+    setFocalLengthRange(minFocal, maxFocal);
+  }
+}
+
+/// Get wide camera focal length (reference for zoom calculations)
+double? _getWideCameraFocalLength() {
+  // Find wide camera
+  for (final camera in _cameras) {
+    if (camera.lensType == CameraLensType.wide && 
+        camera.lensDirection == CameraLensDirection.back) {
+      final props = _cameraProperties[camera.name];
+      return props?.focalLength;
+    }
+  }
+  
+  // Fallback: use shortest focal length
+  double? shortest;
+  for (final props in _cameraProperties.values) {
+    if (props.focalLength != null && props.focalLength! > 0) {
+      if (shortest == null || props.focalLength! < shortest) {
+        shortest = props.focalLength;
+      }
+    }
+  }
+  
+  return shortest;
+}
+
+/// Switch to a specific camera seamlessly
+Future<void> _switchToCamera(CameraDescription camera) async {
+  if (camera == _currentCamera) return;
+  
+  if (kDebugMode) {
+    print('🔄 Switching to: ${camera.name}');
+  }
+  
+  // Dispose old controller
+  await _cameraController?.dispose();
+  
+  // Create new controller
+  final controller = CameraController(
+    camera,
+    ResolutionPreset.high,
+    enableAudio: false,
+    imageFormatGroup: ImageFormatGroup.jpeg,
+  );
+  
+  try {
+    await controller.initialize();
+    await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
+    await controller.setFlashMode(_flashMode ?? FlashMode.off);
+    
+    // Update state
+    setCurrentCamera(camera);
+    setCameraController(controller);
+    
+    // Update zoom range for new camera
+    final minZoom = await controller.getMinZoomLevel();
+    final maxZoom = await controller.getMaxZoomLevel();
+    setZoomRange(minZoom, maxZoom);
+    
+    // Reset zoom to camera's base focal length (1.0x digital zoom)
+    final props = _cameraProperties[camera.name];
+    if (props?.focalLength != null) {
+      await controller.setZoomLevel(1.0);
+      _updateFocalLengthState(props!.focalLength);
+      
+      // Also update zoom level for compatibility
+      final wideFocalLength = _getWideCameraFocalLength();
+      if (wideFocalLength != null) {
+        final zoomRatio = props.focalLength! / wideFocalLength;
+        setZoomLevel(zoomRatio);
+      }
+    }
+    
+    if (kDebugMode) {
+      print('✅ Switched to ${camera.name}');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Failed to switch camera: $e');
+    }
+    setErrorMessage('Failed to switch camera: $e');
   }
 }
 
