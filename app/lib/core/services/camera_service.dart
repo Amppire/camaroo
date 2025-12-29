@@ -103,7 +103,17 @@ class CameraApiModel implements CameraApi {
 
   @override
   Future<void> switchCamera() async {
-    // TODO: Implement
+    final controller = _cameraController; // Linter Cheating. 
+    if (controller == null) {
+      throw Exception('Camera controller is null');
+    }
+    final availableCameras = controller.availableCameras;
+    if (availableCameras == null || availableCameras.isEmpty) {
+      throw Exception('No cameras available');
+    }
+    final nextCamera = availableCameras.firstWhere((camera) => camera.id != controller.currentCamera?.id);
+    await controller.switchCamera(nextCamera);
+   
   }
 
   @override

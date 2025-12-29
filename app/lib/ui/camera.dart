@@ -10,7 +10,11 @@ import 'package:flutter/services.dart';
 import 'package:native_camera_kit/native_camera_kit.dart';
 
 class Camera extends StatefulWidget {
-  const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
+  const Camera({
+    super.key,
+    required this.cameraApi,
+    required this.cameraAdapter,
+  });
   final CameraApi cameraApi;
   final CameraAdapter cameraAdapter;
 
@@ -59,11 +63,15 @@ class _CameraState extends State<Camera> {
               ),
 
               // Top controls overlay
-
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
               // Bottom controls overlay
-              Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomControls(status)),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: _buildBottomControls(status),
+              ),
 
               // Error message overlay
               Positioned(
@@ -94,17 +102,24 @@ class _CameraState extends State<Camera> {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   onLongPress: () => {},
-                  child: Icon(_getFlashIcon(flashMode), color: ThemeConstants.textAndIconColor, size: 24),
+                  child: Icon(
+                    _getFlashIcon(flashMode),
+                    color: ThemeConstants.textAndIconColor,
+                    size: 24,
+                  ),
                 );
               },
             ),
 
-            // Close button (optional)
             GlassButton(
               onPressed: () {
                 // TODO: Implement settings pop-up.
               },
-              child: const Icon(Icons.menu_rounded, color: ThemeConstants.textAndIconColor, size: 24),
+              child: const Icon(
+                Icons.menu_rounded,
+                color: ThemeConstants.textAndIconColor,
+                size: 24,
+              ),
             ),
           ],
         ),
@@ -116,7 +131,12 @@ class _CameraState extends State<Camera> {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 20),
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: 20,
+          top: 20,
+        ),
         child: Stack(
           children: [
             // Gallery thumbnail
@@ -127,19 +147,29 @@ class _CameraState extends State<Camera> {
                 return const SizedBox(width: 56);
               },
             ),
-Align(alignment: Alignment.center, child: 
-            // Capture button
-            CaptureButton(
-              status: status,
-              onPressed: () async {
-                final image = await widget.cameraApi.takePicture();
-                if (image.isNotEmpty) {
-                  // TODO: Save image to gallery.
-                  print('Image saved to gallery: ${image.length} bytes');
-                }
-              },
+            Align(
+              alignment: Alignment.center,
+              child:
+                  // Capture button
+                  CaptureButton(
+                    status: status,
+                    onPressed: () async {
+                      final image = await widget.cameraApi.takePicture();
+                      if (image.isNotEmpty) {
+                        // TODO: Save image to gallery.
+                        print('Image saved to gallery: ${image.length} bytes');
+                      }
+                    },
+                  ),
             ),
-),
+            // flip camera
+            Align(
+              alignment: Alignment.centerRight,
+              child: GlassButton(
+                onPressed: () => widget.cameraApi.switchCamera(),
+                child: const Icon(Icons.flip_camera_ios, color: ThemeConstants.textAndIconColor, size: 24),
+              ),
+            ),
           ],
         ),
       ),
@@ -161,11 +191,18 @@ Align(alignment: Alignment.center, child:
               decoration: BoxDecoration(
                 color: ThemeConstants.errorColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ThemeConstants.errorColor.withValues(alpha: 0.3), width: 1),
+                border: Border.all(
+                  color: ThemeConstants.errorColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: ThemeConstants.textAndIconColor, size: 20),
+                  const Icon(
+                    Icons.error_outline,
+                    color: ThemeConstants.textAndIconColor,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
