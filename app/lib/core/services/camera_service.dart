@@ -108,7 +108,6 @@ class CameraApiModel implements CameraApi {
 
   @override
   Future<void> toggleFlash() async {
-    // Pure business logic - cycle through flash modes
     FlashMode newMode;
     switch (_flashMode) {
       case FlashMode.off:
@@ -129,7 +128,6 @@ class CameraApiModel implements CameraApi {
       throw Exception('Camera controller is null');
     }
     await controller.setFlashMode(newMode);
-    print('🔵 Dart: Setting flash mode to $newMode');
     setFlashMode(newMode);
   }
   
