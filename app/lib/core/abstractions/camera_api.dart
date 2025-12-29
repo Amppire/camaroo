@@ -2,16 +2,18 @@ import 'dart:typed_data';
 
 import 'package:native_camera_kit/native_camera_kit.dart';
 abstract class CameraApi {
+
+  // Camera Controller
+  NativeCameraController? get cameraNativeController;
+
+
   // Camera Status
   // TODO: Doc.
   CameraStatus get status;
   Function(CameraStatus) onStatusChanged = (status) {};
   void setStatus(CameraStatus newStatus);
 
-  // Camera Controller
-  NativeCameraController? get cameraNativeController;
-  Function(NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
-  void setCameraNativeController(NativeCameraController? newCameraNativeController);
+
 
   // Flash Mode
   // TODO: Doc.

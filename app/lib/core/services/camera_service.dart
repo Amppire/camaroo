@@ -35,15 +35,8 @@ class CameraApiModel implements CameraApi {
   // Camera Controller
   @override
   NativeCameraController? get cameraNativeController => _cameraController;
-
-  @override
-  Function(NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
-
-  @override
-  void setCameraNativeController(NativeCameraController? newCameraNativeController) {
-    _cameraController = newCameraNativeController;
-    onCameraNativeControllerChanged(newCameraNativeController);
-  }
+  void setCameraNativeController(NativeCameraController? newCameraNativeController) => _cameraController = newCameraNativeController;
+  
 
 
   // Flash Mode
@@ -112,6 +105,8 @@ class CameraApiModel implements CameraApi {
       throw Exception('No cameras available');
     }
     final nextCamera = availableCameras.firstWhere((camera) => camera.id != controller.currentCamera?.id);
+
+    print('Focal length: ${controller.focalLength.value}');
     await controller.switchCamera(nextCamera);
    
   }

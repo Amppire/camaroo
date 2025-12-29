@@ -3,6 +3,7 @@ import 'package:camaroo/utils/theme_constants.dart';
 import 'package:camaroo/widgets/camera/glass_button.dart';
 import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
+import 'package:camaroo/widgets/camera/zoom_slider.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,14 @@ class _CameraState extends State<Camera> {
 
               // Top controls overlay
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
+
+              // Zoom slider (above bottom controls)
+              Positioned(
+                bottom: 160,
+                left: 0,
+                right: 0,
+                child: _buildZoomSlider(),
+              ),
 
               // Bottom controls overlay
               Positioned(
@@ -221,6 +230,15 @@ class _CameraState extends State<Camera> {
         );
       },
     );
+  }
+
+  Widget _buildZoomSlider() {
+    final controller = widget.cameraApi.cameraNativeController;
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
+
+    return ZoomSlider(controller: controller);
   }
 
   IconData _getFlashIcon(FlashMode mode) {
