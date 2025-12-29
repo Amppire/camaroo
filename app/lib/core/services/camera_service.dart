@@ -128,7 +128,6 @@ class CameraApiModel implements CameraApi {
   
   @override
   Future<Uint8List> takePicture() async {
-    print('🔵 Dart: takePicture called');
     setStatus(CameraStatus.takingPicture);
     setErrorMessage(null);
     
@@ -136,26 +135,21 @@ class CameraApiModel implements CameraApi {
       if (_cameraController == null) {
         throw Exception('Camera controller is null');
       }
-      
-      print('🔵 Dart: Calling native takePicture');
       final image = await _cameraController!.takePicture();
-      print('🔵 Dart: Image taken: ${image.length} bytes');
       
       // Save to storage
-      final photo = Photo(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        filePath: '',
-        capturedAt: DateTime.now(),
-      );
+      // final photo = Photo(
+      //   id: DateTime.now().millisecondsSinceEpoch.toString(),
+      //   filePath: '${DateTime.now().millisecondsSinceEpoch}.jpg',
+      //   capturedAt: DateTime.now(),
+      // );
       
       // TODO: Save image data to file
-      await _storageService.photos.savePhoto(photo);
+      // await _storageService.photos.savePhoto(photo);
       
       setStatus(CameraStatus.ready);
       return image;
-    } catch (e, stackTrace) {
-      print('🔴 Dart: Error taking picture: $e');
-      print('🔴 Dart: Stack trace: $stackTrace');
+    } catch (e) {
       setErrorMessage('Failed to take picture: $e');
       setStatus(CameraStatus.error);
       rethrow;
