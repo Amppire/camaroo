@@ -1,23 +1,23 @@
 import 'dart:typed_data';
 
-import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
+import 'package:native_camera_kit/native_camera_kit.dart';
 abstract class CameraApi {
   // Camera Status
   // TODO: Doc.
-  native_camera_kit.CameraStatus get status;
-  Function(native_camera_kit.CameraStatus) onStatusChanged = (status) {};
-  void setStatus(native_camera_kit.CameraStatus newStatus);
+  CameraStatus get status;
+  Function(CameraStatus) onStatusChanged = (status) {};
+  void setStatus(CameraStatus newStatus);
 
   // Camera Controller
-  native_camera_kit.NativeCameraController? get cameraNativeController;
-  Function(native_camera_kit.NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
-  void setCameraNativeController(native_camera_kit.NativeCameraController? newCameraNativeController);
+  NativeCameraController? get cameraNativeController;
+  Function(NativeCameraController?) onCameraNativeControllerChanged = (cameraNativeController) {};
+  void setCameraNativeController(NativeCameraController? newCameraNativeController);
 
   // Flash Mode
   // TODO: Doc.
-  native_camera_kit.FlashMode get flashMode;
-  Function(native_camera_kit.FlashMode?) onFlashModeChanged = (flashMode) {};
-  void setFlashMode(native_camera_kit.FlashMode? newFlashMode);
+  FlashMode get flashMode;
+  Function(FlashMode) onFlashModeChanged = (flashMode) {};
+  void setFlashMode(FlashMode newFlashMode);
 
   // Error Message
   // TODO: Doc.

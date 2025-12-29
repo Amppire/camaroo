@@ -14,7 +14,7 @@ class CameraApiModel implements CameraApi {
   CameraStatus _cameraStatus = CameraStatus.uninitialized;
   NativeCameraController? _cameraController;
   String? _errorMessage;
-  FlashMode? _flashMode = FlashMode.off;
+  FlashMode _flashMode = FlashMode.off;
 
   
 
@@ -48,13 +48,13 @@ class CameraApiModel implements CameraApi {
 
   // Flash Mode
   @override
-  FlashMode get flashMode => _flashMode ?? FlashMode.off;
+  FlashMode get flashMode => _flashMode;
 
   @override
-  Function(FlashMode?) onFlashModeChanged = (flash) {};
+  Function(FlashMode) onFlashModeChanged = (flash) {};
 
   @override
-  void setFlashMode(FlashMode? newFlashMode) {
+  void setFlashMode(FlashMode newFlashMode) {
     _flashMode = newFlashMode;
     onFlashModeChanged(newFlashMode);
   }
@@ -110,7 +110,7 @@ class CameraApiModel implements CameraApi {
   Future<void> toggleFlash() async {
     // Pure business logic - cycle through flash modes
     FlashMode newMode;
-    switch (_flashMode ?? FlashMode.off) {
+    switch (_flashMode) {
       case FlashMode.off:
         newMode = FlashMode.auto;
         break;
@@ -124,7 +124,12 @@ class CameraApiModel implements CameraApi {
         newMode = FlashMode.off;
         break;
     }
-
+    final controller = _cameraController; // Linter Cheating. 
+    if (controller == null) {
+      throw Exception('Camera controller is null');
+    }
+    await controller.setFlashMode(newMode);
+    print('🔵 Dart: Setting flash mode to $newMode');
     setFlashMode(newMode);
   }
   

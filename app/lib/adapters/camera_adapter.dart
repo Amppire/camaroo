@@ -19,6 +19,6 @@ class CameraAdapter {
   }
 
   late final ValueNotifier<native_camera_kit.CameraStatus> statusNotifier;
-  late final ValueNotifier<native_camera_kit.FlashMode?> flashModeNotifier;
+  late final ValueNotifier<native_camera_kit.FlashMode> flashModeNotifier;
   late final ValueNotifier<String?> errorMessageNotifier;
 }
