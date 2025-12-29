@@ -132,10 +132,11 @@ class CameraApiModel implements CameraApi {
     setErrorMessage(null);
     
     try {
-      if (_cameraController == null) {
+      final controller = _cameraController; // Linter Cheating. 
+      if (controller == null) {
         throw Exception('Camera controller is null');
       }
-      final image = await _cameraController!.takePicture();
+      final image = await controller.takePicture();
       
       // Save to storage
       // final photo = Photo(
