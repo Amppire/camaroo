@@ -1,5 +1,4 @@
 // Capture button widget (iOS style)
-import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
 import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 
