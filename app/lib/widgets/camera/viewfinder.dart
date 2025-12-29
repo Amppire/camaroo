@@ -81,7 +81,7 @@ class Viewfinder extends StatelessWidget {
 
         // Full-screen camera preview - centered with correct aspect ratio
         return Center(
-          child: NativeCameraPreview(controller: cameraApi.cameraNativeController!),
+          child: SizedBox.expand(child: AspectRatio(aspectRatio: 19.9/9, child: NativeCameraPreview(controller: cameraApi.cameraNativeController!))),
         );
   }
 }

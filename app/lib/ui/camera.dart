@@ -1,10 +1,7 @@
 import 'dart:ui';
 import 'package:camaroo/utils/theme_constants.dart';
 import 'package:camaroo/widgets/camera/glass_button.dart';
-import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
-import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
-import 'package:camaroo/widgets/camera/flip_button.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
@@ -61,7 +58,6 @@ class _CameraState extends State<Camera> {
               ),
 
               // Top controls overlay
-              Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
