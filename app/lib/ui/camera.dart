@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:camaroo/utils/theme_constants.dart';
 import 'package:camaroo/widgets/camera/glass_button.dart';
+import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
@@ -116,9 +117,7 @@ class _CameraState extends State<Camera> {
       top: false,
       child: Container(
         padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Stack(
           children: [
             // Gallery thumbnail
             ValueListenableBuilder<String?>(
@@ -128,7 +127,13 @@ class _CameraState extends State<Camera> {
                 return const SizedBox(width: 56);
               },
             ),
-
+Align(alignment: Alignment.center, child: 
+            // Capture button
+            CaptureButton(
+              status: status,
+              onPressed: () => widget.cameraApi.takePicture(),
+            ),
+),
           ],
         ),
       ),
