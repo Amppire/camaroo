@@ -7,7 +7,7 @@ import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
+import 'package:native_camera_kit/native_camera_kit.dart';
 
 class Camera extends StatefulWidget {
   const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
@@ -35,9 +35,9 @@ class _CameraState extends State<Camera> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     // Clean up controller
-    widget.cameraAdapter.statusNotifier.value = native_camera_kit.CameraStatus.uninitialized;
+    widget.cameraAdapter.statusNotifier.value = CameraStatus.uninitialized;
     widget.cameraAdapter.errorMessageNotifier.value = null;
-    widget.cameraAdapter.flashModeNotifier.value = native_camera_kit.FlashMode.off;
+    widget.cameraAdapter.flashModeNotifier.value = FlashMode.off;
     super.dispose();
   }
 
@@ -45,7 +45,7 @@ class _CameraState extends State<Camera> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ThemeConstants.backgroundColor,
-      body: ValueListenableBuilder<native_camera_kit.CameraStatus>(
+      body: ValueListenableBuilder<CameraStatus>(
         valueListenable: widget.cameraAdapter.statusNotifier,
         builder: (context, status, _) {
           return Stack(
@@ -88,13 +88,13 @@ class _CameraState extends State<Camera> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Flash control
-            ValueListenableBuilder<native_camera_kit.FlashMode?>(
+            ValueListenableBuilder<FlashMode>(
               valueListenable: widget.cameraAdapter.flashModeNotifier,
-              builder: (context, native_camera_kit.FlashMode? flashMode, _) {
+              builder: (context, FlashMode flashMode, _) {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   onLongPress: () => {},
-                  child: Icon(_getFlashIcon( native_camera_kit.FlashMode.off), color: ThemeConstants.textAndIconColor, size: 24),
+                  child: Icon(_getFlashIcon(flashMode), color: ThemeConstants.textAndIconColor, size: 24),
                 );
               },
             ),
@@ -112,7 +112,7 @@ class _CameraState extends State<Camera> {
     );
   }
 
-  Widget _buildBottomControls(native_camera_kit.CameraStatus status) {
+  Widget _buildBottomControls(CameraStatus status) {
     return SafeArea(
       top: false,
       child: Container(
@@ -186,18 +186,16 @@ Align(alignment: Alignment.center, child:
     );
   }
 
-  IconData _getFlashIcon(native_camera_kit.FlashMode? mode) {
+  IconData _getFlashIcon(FlashMode mode) {
     switch (mode) {
-      case native_camera_kit.FlashMode.off:
+      case FlashMode.off:
         return Icons.flash_off;
-      case native_camera_kit.FlashMode.auto:
+      case FlashMode.auto:
         return Icons.flash_auto;
-      case native_camera_kit.FlashMode.on:
+      case FlashMode.on:
         return Icons.flash_on;
-      case native_camera_kit.FlashMode.torch:
+      case FlashMode.torch:
         return Icons.flashlight_on;
-      case null:
-        return Icons.flash_off;
     }
   }
 }
