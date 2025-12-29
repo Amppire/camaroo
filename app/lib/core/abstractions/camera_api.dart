@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 abstract class CameraApi {
   // Camera Status
@@ -41,7 +43,7 @@ abstract class CameraApi {
   /// Takes a picture.
   /// Will return error if the camera is not ready.
   ///
-  void takePicture();
+  Future<Uint8List> takePicture();
 
   /// Toggles the flash mode.
   /// Will return error if the flash mode is not available.

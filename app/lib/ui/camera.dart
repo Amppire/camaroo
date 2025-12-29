@@ -131,7 +131,13 @@ Align(alignment: Alignment.center, child:
             // Capture button
             CaptureButton(
               status: status,
-              onPressed: () => widget.cameraApi.takePicture(),
+              onPressed: () async {
+                final image = await widget.cameraApi.takePicture();
+                if (image.isNotEmpty) {
+                  // TODO: Save image to gallery.
+                  print('Image saved to gallery: ${image.length} bytes');
+                }
+              },
             ),
 ),
           ],

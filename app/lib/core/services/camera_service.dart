@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:camaroo/utils/app_constants.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:native_camera_kit/native_camera_kit.dart';
@@ -125,12 +127,45 @@ class CameraApiModel implements CameraApi {
   }
   
   @override
-  void takePicture() {
-    // TODO: implement takePicture
+  Future<Uint8List> takePicture() async {
+    print('🔵 Dart: takePicture called');
+    setStatus(CameraStatus.takingPicture);
+    setErrorMessage(null);
+    
+    try {
+      if (_cameraController == null) {
+        throw Exception('Camera controller is null');
+      }
+      
+      print('🔵 Dart: Calling native takePicture');
+      final image = await _cameraController!.takePicture();
+      print('🔵 Dart: Image taken: ${image.length} bytes');
+      
+      // Save to storage
+      final photo = Photo(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        filePath: '',
+        capturedAt: DateTime.now(),
+      );
+      
+      // TODO: Save image data to file
+      await _storageService.photos.savePhoto(photo);
+      
+      setStatus(CameraStatus.ready);
+      return image;
+    } catch (e, stackTrace) {
+      print('🔴 Dart: Error taking picture: $e');
+      print('🔴 Dart: Stack trace: $stackTrace');
+      setErrorMessage('Failed to take picture: $e');
+      setStatus(CameraStatus.error);
+      rethrow;
+    }
   }
 
   // ============================================================================
   // PRIVATE HELPERS
   // ============================================================================
+
+
 
 }

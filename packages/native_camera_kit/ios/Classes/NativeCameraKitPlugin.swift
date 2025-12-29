@@ -27,6 +27,9 @@ public class NativeCameraKitPlugin: NSObject, FlutterPlugin, NativeCameraApi {
   private var isInitialized = false
   private var currentFlashMode: FlashMode = .off
   
+  // Photo capture delegates - need to retain them during capture
+  private var photoCaptureDelegate: PhotoCaptureDelegate?
+  
   // MARK: - Helper Functions
   
   /// Calculate focal length from device format
@@ -356,6 +359,8 @@ public class NativeCameraKitPlugin: NSObject, FlutterPlugin, NativeCameraApi {
       return
     }
     
+    print("📸 takePicture called")
+    
     DispatchQueue.main.async { [weak self] in
       self?.flutterApi?.onStatusChanged(status: .takingPicture, completion: { _ in })
     }
@@ -378,14 +383,19 @@ public class NativeCameraKitPlugin: NSObject, FlutterPlugin, NativeCameraApi {
     
     settings.isHighResolutionPhotoEnabled = true
     
-    let photoCaptureDelegate = PhotoCaptureDelegate { [weak self] result in
+    // Retain the delegate until photo capture completes
+    photoCaptureDelegate = PhotoCaptureDelegate { [weak self] result in
+      print("📸 Photo capture completed")
       DispatchQueue.main.async {
         self?.flutterApi?.onStatusChanged(status: .ready, completion: { _ in })
+        // Clear the delegate after completion
+        self?.photoCaptureDelegate = nil
       }
       completion(result)
     }
     
-    photoOutput.capturePhoto(with: settings, delegate: photoCaptureDelegate)
+    print("📸 Capturing photo with settings: \(settings)")
+    photoOutput.capturePhoto(with: settings, delegate: photoCaptureDelegate!)
   }
   
   func dispose() throws {
@@ -445,15 +455,21 @@ private class PhotoCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate {
   }
   
   func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    print("📸 photoOutput delegate called")
+    
     if let error = error {
+      print("📸 Error capturing photo: \(error.localizedDescription)")
       completion(.failure(error))
       return
     }
     
     guard let imageData = photo.fileDataRepresentation() else {
+      print("📸 Failed to get image data representation")
       completion(.failure(NSError(domain: "NativeCameraKit", code: -8, userInfo: [NSLocalizedDescriptionKey: "Failed to get image data"])))
       return
     }
+    
+    print("📸 Got image data: \(imageData.count) bytes")
     
     // Get image dimensions
     if let image = UIImage(data: imageData) {
@@ -465,8 +481,10 @@ private class PhotoCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate {
         width: Int64(image.size.width * image.scale),
         height: Int64(image.size.height * image.scale)
       )
+      print("📸 Photo result created: \(result.width)x\(result.height)")
       completion(.success(result))
     } else {
+      print("📸 Failed to decode image from data")
       completion(.failure(NSError(domain: "NativeCameraKit", code: -9, userInfo: [NSLocalizedDescriptionKey: "Failed to decode image"])))
     }
   }
