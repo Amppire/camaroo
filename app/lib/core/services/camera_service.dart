@@ -104,10 +104,10 @@ class CameraApiModel implements CameraApi {
     if (availableCameras == null || availableCameras.isEmpty) {
       throw Exception('No cameras available');
     }
-    final nextCamera = availableCameras.firstWhere((camera) => camera.id != controller.currentCamera?.id);
+    final nextCamera = availableCameras.firstWhere((camera) => camera.position != controller.currentCamera?.position);
 
-    print('Focal length: ${controller.focalLength.value}');
-    await controller.switchCamera(nextCamera);
+
+     await controller.switchCamera(nextCamera);
    
   }
 

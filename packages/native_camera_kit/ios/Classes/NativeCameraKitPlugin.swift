@@ -71,7 +71,24 @@ public class NativeCameraKitPlugin: NSObject, FlutterPlugin, NativeCameraApi {
       position: .unspecified
     )
     
-    availableDevices = discoverySession.devices
+    let allDevices = discoverySession.devices
+    
+    // Deduplicate front cameras (TrueDepth camera IS the front camera)
+    // Check if we have a TrueDepth camera for front position
+    let hasTrueDepthFront = allDevices.contains { 
+      $0.position == .front && $0.deviceType == .builtInTrueDepthCamera 
+    }
+    
+    // Filter out generic front wide angle camera if we have TrueDepth
+    availableDevices = allDevices.filter { device in
+      // If this is a front wide angle camera and we have TrueDepth, skip it
+      if device.position == .front && 
+         device.deviceType == .builtInWideAngleCamera && 
+         hasTrueDepthFront {
+        return false
+      }
+      return true
+    }
     
     return availableDevices.map { device -> CameraDevice in
       let focalLength = calculateFocalLength(from: device)
