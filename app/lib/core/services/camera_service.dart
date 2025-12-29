@@ -89,11 +89,13 @@ class CameraApiModel implements CameraApi {
       }
 
       // Initialize with default (back camera)
-      await _cameraController!.initializeDefault();
-      print('Camera initialized');
+      final controller = _cameraController; // Linter Cheating. 
+      if (controller == null) {
+        throw Exception('Camera controller is null');
+      }
+      await controller.initializeDefault();
       setStatus(CameraStatus.ready);
     } catch (e) {
-      print('Error initializing camera: $e');
       setErrorMessage('${AppConstants.unexpectedError} $e');
       setStatus(CameraStatus.error);
     }
