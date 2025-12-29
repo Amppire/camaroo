@@ -118,7 +118,7 @@ class CameraApiModel implements CameraApi {
         newMode = FlashMode.on;
         break;
       case FlashMode.on:
-        newMode = FlashMode.auto;
+        newMode = FlashMode.torch;
         break;
       case FlashMode.torch:
         newMode = FlashMode.off;
