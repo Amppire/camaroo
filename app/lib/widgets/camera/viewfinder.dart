@@ -1,7 +1,7 @@
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:native_camera_kit/native_camera_kit.dart';
 
 /// Heart of the camera app. Displays the live camera feed. This takes up the entire screen.
 /// TODO: Add pinch to zoom.
@@ -13,10 +13,8 @@ class Viewfinder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<CameraController?>(
-      valueListenable: cameraAdapter.cameraControllerNotifier,
-      builder: (context, controller, _) {
-        if (status == CameraStatus.initializing) {
+   
+          if (status == CameraStatus.initializing) {
           return const Center(
             child: CircularProgressIndicator(
               color: Colors.white,
@@ -25,7 +23,7 @@ class Viewfinder extends StatelessWidget {
           );
         }
 
-        if (status == CameraStatus.error || controller == null) {
+        if (status == CameraStatus.error ) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -72,28 +70,18 @@ class Viewfinder extends StatelessWidget {
           );
         }
 
-        if (!controller.value.isInitialized) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-          );
-        }
+        // if (!ce) {
+        //   return const Center(
+        //     child: CircularProgressIndicator(
+        //       color: Colors.white,
+        //       strokeWidth: 2,
+        //     ),
+        //   );
+        // }
 
-        // Full-screen camera preview
-        final size = MediaQuery.of(context).size;
-        return SizedBox.expand(
-          child: FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: size.width,
-              height: size.width * controller.value.aspectRatio,
-              child: CameraPreview(controller),
-            ),
-          ),
+        // Full-screen camera preview - centered with correct aspect ratio
+        return Center(
+          child: SizedBox.expand(child: AspectRatio(aspectRatio: 19.9/9, child: NativeCameraPreview(controller: cameraApi.cameraNativeController!))),
         );
-      },
-    );
   }
 }

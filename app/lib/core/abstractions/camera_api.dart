@@ -1,35 +1,25 @@
-import 'package:camera/camera.dart';
+import 'dart:typed_data';
 
-enum CameraStatus { uninitialized, initializing, ready, error, takingPicture }
-
+import 'package:native_camera_kit/native_camera_kit.dart';
 abstract class CameraApi {
+
+  // Camera Controller
+  NativeCameraController? get cameraNativeController;
+
+
   // Camera Status
   // TODO: Doc.
   CameraStatus get status;
   Function(CameraStatus) onStatusChanged = (status) {};
   void setStatus(CameraStatus newStatus);
 
-  // Camera Controller
-  CameraController? get cameraController;
-  Function(CameraController?) onCameraControllerChanged = (cameraController) {};
-  void setCameraController(CameraController? newCameraController);
 
-  // Cameras
-  // TODO: Doc.
-  List<CameraDescription> get cameras;
-  Function(List<CameraDescription>) onCamerasChanged = (cameras) {};
-  void setCameras(List<CameraDescription> newCameras);
-
-  // Current Camera
-  CameraDescription? get currentCamera;
-  Function(CameraDescription?) onCurrentCameraChanged = (currentCamera) {};
-  void setCurrentCamera(CameraDescription? newCurrentCamera);
 
   // Flash Mode
   // TODO: Doc.
-  FlashMode? get flashMode;
-  Function(FlashMode?) onFlashModeChanged = (flashMode) {};
-  void setFlashMode(FlashMode? newFlashMode);
+  FlashMode get flashMode;
+  Function(FlashMode) onFlashModeChanged = (flashMode) {};
+  void setFlashMode(FlashMode newFlashMode);
 
   // Error Message
   // TODO: Doc.
@@ -37,11 +27,7 @@ abstract class CameraApi {
   Function(String?) onErrorMessageChanged = (errorMessage) {};
   void setErrorMessage(String? newErrorMessage);
 
-  // Picture Taken
-  // TODO: Doc.
-  XFile? get pictureTaken;
-  Function(XFile?) onPictureTakenChanged = (pictureTaken) {};
-  void setPictureTaken(XFile? newPictureTaken);
+
 
   /// Functions
   /// ---------------------------------------------------------------------------
@@ -59,7 +45,7 @@ abstract class CameraApi {
   /// Takes a picture.
   /// Will return error if the camera is not ready.
   ///
-  void takePicture();
+  Future<Uint8List> takePicture();
 
   /// Toggles the flash mode.
   /// Will return error if the flash mode is not available.

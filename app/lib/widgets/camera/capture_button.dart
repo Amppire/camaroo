@@ -1,10 +1,10 @@
 // Capture button widget (iOS style)
-import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
+import 'package:native_camera_kit/native_camera_kit.dart' as native_camera_kit;
 
 /// Center camprute button for taking pictures.
 class CaptureButton extends StatelessWidget {
-  final CameraStatus status;
+  final native_camera_kit.CameraStatus status;
   final VoidCallback onPressed;
   
   const CaptureButton({
@@ -15,8 +15,8 @@ class CaptureButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isActive = status == CameraStatus.ready;
-    final bool isTaking = status == CameraStatus.takingPicture;
+    final bool isActive = status == native_camera_kit.CameraStatus.ready;
+    final bool isTaking = status == native_camera_kit.CameraStatus.takingPicture;
     
     return GestureDetector(
       onTap: isActive ? onPressed : null,

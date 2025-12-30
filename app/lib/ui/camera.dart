@@ -3,16 +3,19 @@ import 'package:camaroo/utils/theme_constants.dart';
 import 'package:camaroo/widgets/camera/glass_button.dart';
 import 'package:camaroo/widgets/camera/capture_button.dart';
 import 'package:camaroo/widgets/camera/viewfinder.dart';
-import 'package:camaroo/widgets/camera/gallery_thumbnail.dart';
-import 'package:camaroo/widgets/camera/flip_button.dart';
-import 'package:camera/camera.dart';
+import 'package:camaroo/widgets/camera/zoom_slider.dart';
 import 'package:camaroo/adapters/camera_adapter.dart';
 import 'package:camaroo/core/abstractions/camera_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:native_camera_kit/native_camera_kit.dart';
 
 class Camera extends StatefulWidget {
-  const Camera({super.key, required this.cameraApi, required this.cameraAdapter});
+  const Camera({
+    super.key,
+    required this.cameraApi,
+    required this.cameraAdapter,
+  });
   final CameraApi cameraApi;
   final CameraAdapter cameraAdapter;
 
@@ -37,12 +40,8 @@ class _CameraState extends State<Camera> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     // Clean up controller
-    widget.cameraAdapter.cameraControllerNotifier.value?.dispose();
-    widget.cameraAdapter.currentCameraNotifier.value = null;
-    widget.cameraAdapter.camerasNotifier.value = [];
     widget.cameraAdapter.statusNotifier.value = CameraStatus.uninitialized;
     widget.cameraAdapter.errorMessageNotifier.value = null;
-    widget.cameraAdapter.pictureTakenNotifier.value = null;
     widget.cameraAdapter.flashModeNotifier.value = FlashMode.off;
     super.dispose();
   }
@@ -67,10 +66,21 @@ class _CameraState extends State<Camera> {
               // Top controls overlay
               Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
 
-              Positioned(top: 0, left: 0, right: 0, child: _buildTopControls()),
+              // Zoom slider (above bottom controls)
+              Positioned(
+                bottom: 160,
+                left: 0,
+                right: 0,
+                child: _buildZoomSlider(),
+              ),
 
               // Bottom controls overlay
-              Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomControls(status)),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: _buildBottomControls(status),
+              ),
 
               // Error message overlay
               Positioned(
@@ -95,23 +105,30 @@ class _CameraState extends State<Camera> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Flash control
-            ValueListenableBuilder<FlashMode?>(
+            ValueListenableBuilder<FlashMode>(
               valueListenable: widget.cameraAdapter.flashModeNotifier,
-              builder: (context, flashMode, _) {
+              builder: (context, FlashMode flashMode, _) {
                 return GlassButton(
                   onPressed: () => widget.cameraApi.toggleFlash(),
                   onLongPress: () => {},
-                  child: Icon(_getFlashIcon(flashMode), color: ThemeConstants.textAndIconColor, size: 24),
+                  child: Icon(
+                    _getFlashIcon(flashMode),
+                    color: ThemeConstants.textAndIconColor,
+                    size: 24,
+                  ),
                 );
               },
             ),
 
-            // Close button (optional)
             GlassButton(
               onPressed: () {
                 // TODO: Implement settings pop-up.
               },
-              child: const Icon(Icons.menu_rounded, color: ThemeConstants.textAndIconColor, size: 24),
+              child: const Icon(
+                Icons.menu_rounded,
+                color: ThemeConstants.textAndIconColor,
+                size: 24,
+              ),
             ),
           ],
         ),
@@ -123,39 +140,44 @@ class _CameraState extends State<Camera> {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: 20,
+          top: 20,
+        ),
+        child: Stack(
           children: [
             // Gallery thumbnail
-            ValueListenableBuilder<XFile?>(
-              valueListenable: widget.cameraAdapter.pictureTakenNotifier,
-              builder: (context, picture, _) {
-                return GalleryThumbnail(picture: picture);
+            ValueListenableBuilder<String?>(
+              valueListenable: widget.cameraAdapter.errorMessageNotifier,
+              builder: (context, error, _) {
+                if (error == null) return const SizedBox.shrink();
+                return const SizedBox(width: 56);
               },
             ),
-
-            // Capture button
-            CaptureButton(status: status, onPressed: () => widget.cameraApi.takePicture()),
-
-            // Camera flip button
-            ValueListenableBuilder<List<CameraDescription>>(
-              valueListenable: widget.cameraAdapter.camerasNotifier,
-              builder: (context, cameras, _) {
-                if (cameras.length <= 1) {
-                  return const SizedBox(width: 56); // Spacer for symmetry
-                }
-                return ValueListenableBuilder<CameraDescription?>(
-                  valueListenable: widget.cameraAdapter.currentCameraNotifier,
-                  builder: (context, currentCamera, _) {
-                    if (currentCamera == null) {
-                      return const SizedBox(width: 56);
-                    }
-                    return FlipButton(cameraApi: widget.cameraApi, currentCamera: currentCamera);
-                  },
-                );
-              },
+            Align(
+              alignment: Alignment.center,
+              child:
+                  // Capture button
+                  CaptureButton(
+                    status: status,
+                    onPressed: () async {
+                      final image = await widget.cameraApi.takePicture();
+                      if (image.isNotEmpty) {
+                        // TODO: Save image to gallery.
+                        print('Image saved to gallery: ${image.length} bytes');
+                      }
+                    },
+                  ),
+            ),
+            // flip camera
+            Align(
+              alignment: Alignment.centerRight,
+              child: GlassButton(
+                onPressed: () => widget.cameraApi.switchCamera(),
+                child: const Icon(Icons.flip_camera_ios, color: ThemeConstants.textAndIconColor, size: 24),
+              ),
             ),
           ],
         ),
@@ -178,11 +200,18 @@ class _CameraState extends State<Camera> {
               decoration: BoxDecoration(
                 color: ThemeConstants.errorColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ThemeConstants.errorColor.withValues(alpha: 0.3), width: 1),
+                border: Border.all(
+                  color: ThemeConstants.errorColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: ThemeConstants.textAndIconColor, size: 20),
+                  const Icon(
+                    Icons.error_outline,
+                    color: ThemeConstants.textAndIconColor,
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -203,18 +232,25 @@ class _CameraState extends State<Camera> {
     );
   }
 
-  IconData _getFlashIcon(FlashMode? mode) {
+  Widget _buildZoomSlider() {
+    final controller = widget.cameraApi.cameraNativeController;
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
+
+    return ZoomSlider(controller: controller);
+  }
+
+  IconData _getFlashIcon(FlashMode mode) {
     switch (mode) {
       case FlashMode.off:
         return Icons.flash_off;
       case FlashMode.auto:
         return Icons.flash_auto;
-      case FlashMode.always:
+      case FlashMode.on:
         return Icons.flash_on;
       case FlashMode.torch:
         return Icons.flashlight_on;
-      case null:
-        return Icons.flash_off;
     }
   }
 }
