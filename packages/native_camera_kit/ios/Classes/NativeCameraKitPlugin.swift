@@ -335,6 +335,78 @@ public class NativeCameraKitPlugin: NSObject, FlutterPlugin, NativeCameraApi {
   }
   
   func setFocalLength(focalLengthMm: Double, completion: @escaping (Result<Void, Error>) -> Void) {
+    guard let currentDevice = currentDevice else {
+      completion(.failure(NSError(domain: "NativeCameraKit", code: -6, userInfo: [NSLocalizedDescriptionKey: "No active device"])))
+      return
+    }
+    
+    // Get all back cameras (only switch between back cameras)
+    let backCameras = availableDevices.filter { $0.position == currentDevice.position }
+    
+    // Find the best camera for this focal length
+    var bestCamera: AVCaptureDevice?
+    var bestDigitalZoom: Double = Double.infinity
+    
+    print("📷 Finding best camera for \(focalLengthMm)mm")
+    
+    for camera in backCameras {
+      let cameraBaseFocalLength = calculateFocalLength(from: camera)
+      let requiredZoom = focalLengthMm / cameraBaseFocalLength
+      
+      print("  - \(camera.localizedName): base=\(String(format: "%.1f", cameraBaseFocalLength))mm, needs \(String(format: "%.2f", requiredZoom))x zoom")
+      
+      // Check if this camera can reach the target focal length
+      if requiredZoom >= camera.minAvailableVideoZoomFactor &&
+         requiredZoom <= camera.activeFormat.videoMaxZoomFactor {
+        // Prefer cameras that need less digital zoom (closer to 1.0x)
+        let digitalZoomAmount = abs(requiredZoom - 1.0)
+        
+        if digitalZoomAmount < bestDigitalZoom {
+          bestDigitalZoom = digitalZoomAmount
+          bestCamera = camera
+          print("    ✓ Best so far (digital zoom: \(String(format: "%.2f", digitalZoomAmount)))")
+        }
+      }
+    }
+    
+    if let best = bestCamera {
+      print("🎯 Selected: \(best.localizedName)")
+    }
+    
+    // Use current camera if no better option found
+    guard let targetCamera = bestCamera ?? backCameras.first else {
+      completion(.failure(NSError(domain: "NativeCameraKit", code: -6, userInfo: [NSLocalizedDescriptionKey: "No suitable camera found"])))
+      return
+    }
+    
+    // Calculate final focal length values
+    let targetBaseFocalLength = calculateFocalLength(from: targetCamera)
+    let targetZoomFactor = focalLengthMm / targetBaseFocalLength
+    let clampedZoom = max(targetCamera.minAvailableVideoZoomFactor, 
+                          min(targetZoomFactor, targetCamera.activeFormat.videoMaxZoomFactor))
+    
+    // Switch camera if different from current
+    if targetCamera.uniqueID != currentDevice.uniqueID {
+      print("🔄 Switching from \(currentDevice.localizedName) to \(targetCamera.localizedName) for \(focalLengthMm)mm")
+      
+      // Switch camera first
+      switchCamera(cameraId: targetCamera.uniqueID) { [weak self] result in
+        switch result {
+        case .success:
+          // After switching, apply the zoom
+          self?.applyZoomToCurrentCamera(zoomFactor: clampedZoom, targetFocalLength: focalLengthMm, completion: completion)
+        case .failure(let error):
+          completion(.failure(error))
+        }
+      }
+    } else {
+      // Same camera, just apply zoom
+      applyZoomToCurrentCamera(zoomFactor: clampedZoom, targetFocalLength: focalLengthMm, completion: completion)
+    }
+  }
+  
+  /// Helper function to apply zoom to the current camera
+  private func applyZoomToCurrentCamera(zoomFactor: Double, targetFocalLength: Double, completion: @escaping (Result<Void, Error>) -> Void) {
     guard let device = currentDevice else {
       completion(.failure(NSError(domain: "NativeCameraKit", code: -6, userInfo: [NSLocalizedDescriptionKey: "No active device"])))
       return
@@ -342,20 +414,20 @@ public class NativeCameraKitPlugin: NSObject, FlutterPlugin, NativeCameraApi {
     
     do {
       try device.lockForConfiguration()
-      
-      let baseFocalLength = calculateFocalLength(from: device)
-      let zoomFactor = focalLengthMm / baseFocalLength
-      
-      // Clamp to device limits
-      let clampedZoom = max(device.minAvailableVideoZoomFactor, min(zoomFactor, device.activeFormat.videoMaxZoomFactor))
-      
-      device.videoZoomFactor = clampedZoom
+      device.videoZoomFactor = zoomFactor
       device.unlockForConfiguration()
       
-      // Notify Flutter
-      let actualFocalLength = baseFocalLength * clampedZoom
+      // Notify Flutter with actual focal length
+      let baseFocalLength = calculateFocalLength(from: device)
+      let actualFocalLength = baseFocalLength * zoomFactor
+      
       DispatchQueue.main.async { [weak self] in
         self?.flutterApi?.onFocalLengthChanged(focalLength: actualFocalLength, completion: { _ in })
+        
+        // Also update focal length range for the new camera
+        let minFL = baseFocalLength * device.minAvailableVideoZoomFactor
+        let maxFL = baseFocalLength * device.activeFormat.videoMaxZoomFactor
+        self?.flutterApi?.onFocalLengthRangeChanged(min: minFL, max: maxFL, completion: { _ in })
       }
       
       completion(.success(()))

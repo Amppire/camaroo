@@ -80,17 +80,24 @@ class NativeCameraController implements NativeCameraFlutterApi {
     }
   }
 
-  /// Initialize with the default back camera
+  /// Initialize with the default back camera (ultra-wide - lowest focal length)
   Future<void> initializeDefault() async {
     final cameras = await getAvailableCameras();
     
-    // Find wide back camera
-    final backCamera = cameras.firstWhere(
-      (c) => c.position == CameraPosition.back,
-      orElse: () => cameras.first,
-    );
+    // Find back cameras and sort by focal length (lowest first)
+    final backCameras = cameras.where((c) => c.position == CameraPosition.back).toList();
     
-    await initialize(backCamera);
+    if (backCameras.isEmpty) {
+      // Fallback to first available camera
+      await initialize(cameras.first);
+      return;
+    }
+    
+    // Sort by focal length (ascending) to get ultra-wide first
+    backCameras.sort((a, b) => a.focalLength.compareTo(b.focalLength));
+    
+    // Initialize with ultra-wide (lowest focal length)
+    await initialize(backCameras.first);
   }
 
   /// Switch to a different camera seamlessly

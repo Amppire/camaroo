@@ -106,7 +106,6 @@ class CameraApiModel implements CameraApi {
     }
     final nextCamera = availableCameras.firstWhere((camera) => camera.position != controller.currentCamera?.position);
 
-
      await controller.switchCamera(nextCamera);
    
   }
